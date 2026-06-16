@@ -1,0 +1,33 @@
+[
+  {
+    "test": {
+      "tags": ["@full", "@pruned"],
+      "reference": "",
+      "description": "buyGas: sender balance below gas * price + value (have < want) -> insufficient funds"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0xEF04bc7821433f080461BBAE815182E3d7bBb61A",
+          "to": "0x4debB0dF4da8D1f51EF67B727c3F1c0eCC7ed009",
+          "gas": "0x5208",
+          "maxFeePerGas": "0x174876E800",
+          "maxPriorityFeePerGas": "0x1",
+          "value": "0x1"
+        },
+        "latest"
+      ],
+      "id": 1
+    },
+    "response": {
+      "error": {
+        "code": -32000,
+        "message": "err: insufficient funds for gas * price + value: address 0xEF04bc7821433f080461BBAE815182E3d7bBb61A have 0 want 2100000000000001 (supplied gas 21000)"
+      },
+      "id": 1,
+      "jsonrpc": "2.0"
+    }
+  }
+]

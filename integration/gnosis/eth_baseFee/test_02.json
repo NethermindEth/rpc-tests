@@ -1,0 +1,18 @@
+[
+   {
+        "test": {
+            "description": "eth_baseFee takes no params; an unexpected argument must be rejected with -32602 Invalid params."
+        },
+        "request": {
+            "jsonrpc":"2.0",
+            "method":"eth_baseFee",
+            "params":["latest"],
+            "id":1
+        },
+        "response": {
+            "id":1,
+            "jsonrpc":"2.0",
+            "error": {"code": -32602, "message": "Invalid params"}
+        }
+    }
+]

@@ -29,7 +29,10 @@
     "response": {
       "id": 1,
       "jsonrpc": "2.0",
-      "result": "0x000000000000000000000000000000000000000000000000000000000000000b"
+      "error": {
+        "code": -32602,
+        "message": "hex number with leading zero digits"
+      }
     }
   }
 ]

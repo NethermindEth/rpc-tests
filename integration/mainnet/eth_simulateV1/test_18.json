@@ -1,9 +1,13 @@
 [
   {
     "test": {
-        "tags": [ "@pruned","@full"],
-       "reference": "",
-       "description": "override difficulty at block 22842259"
+      "tags": [
+        "@check-fields:gasUsed,status",
+        "@pruned",
+        "@full"
+      ],
+      "reference": "",
+      "description": "override difficulty at block 22842259"
     },
     "request": {
       "id": 1,
@@ -36,7 +40,48 @@
     "response": {
       "jsonrpc": "2.0",
       "id": 1,
-      "result": null
+      "result": [
+        {
+          "baseFeePerGas": "0x0",
+          "blobGasUsed": "0x0",
+          "calls": [
+            {
+              "gasUsed": "0x5219",
+              "logs": [],
+              "maxUsedGas": "0x5219",
+              "returnData": "0x000000000000000000000000396343362be2a4da1ce0c1c210945346fb82aa49",
+              "status": "0x1"
+            }
+          ],
+          "difficulty": "0x0",
+          "excessBlobGas": "0xb401631",
+          "extraData": "0x",
+          "gasLimit": "0x3938700",
+          "gasUsed": "0x5219",
+          "hash": "0xb570895b423453f0363e6e61cb70039f5f0d4629ca3bf5d1c78db9ae91a45d33",
+          "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "miner": "0x396343362be2a4da1ce0c1c210945346fb82aa49",
+          "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "nonce": "0x0000000000000000",
+          "number": "0x1820056",
+          "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "parentHash": "0x7df2ec6b77459257a1d38d0d7d4559264c9ab5599a475f3b9503af8fb8f1e52f",
+          "receiptsRoot": "0xf0f6c0603443a0b4f5f38ed4e20f5180c09e662865a68d708630154e6e42bc26",
+          "requestsHash": "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+          "size": "0x295",
+          "stateRoot": "0xf73b8a9b73f0f744be725654db7c506df2d47e1cb25e32a407ce756b29454dda",
+          "timestamp": "0x6a2b2c1f",
+          "totalDifficulty": "0xc70d815d562d3cfa955",
+          "transactions": [
+            "0x9921795c26996acf00aa098578b01317ba5427ce4dc59f3af160be55d3bf8b55"
+          ],
+          "transactionsRoot": "0x62f17621eeeb53b40812c1889aadb28ca7f61f3c000ca2f826d4ed19de8f31b4",
+          "uncles": [],
+          "withdrawals": [],
+          "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+        }
+      ]
     }
   }
 ]

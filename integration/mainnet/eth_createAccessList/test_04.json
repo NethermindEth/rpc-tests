@@ -26,8 +26,10 @@
             "result": {
                 "accessList": [
                     {
-                        "address": "0x7b98421b9314e3ffc0b7a593dba2fbbd3b789c7d",
-                        "storageKeys": []
+                        "address": "0xfa103c21ea2df71dfb92b0652f8b1d795e51cdef",
+                        "storageKeys": [
+                            "0xc82ec873a6c5c50ca9e6566fee5dd50dc037203c45ebf85bc4e1cf94fa5db768"
+                        ]
                     },
                     {
                         "address": "0x4f91ad1a0397b763fc653b4cfe4f836915bfcd84",
@@ -48,7 +50,7 @@
                     }
                 ],
                 "error": "revert",
-                "gasUsed": "0xbcf6"
+                "gasUsed": "0xb396"
             }
         }
     }

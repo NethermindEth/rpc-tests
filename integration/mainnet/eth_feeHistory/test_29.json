@@ -1,9 +1,9 @@
 [
     {
         "test": {
-            "tags": ["@full"],
+            "tags": [],
             "reference": "https://etherscan.io/block/9",
-            "description": "Empty block with single percentile=100 — reward is array of zeros (no txs to extract a tip from)"
+            "description": "Empty block with single percentile=100 — reward is array of zeros (no txs to extract a tip from). Archive-only: block 9 bodies unavailable on snap-synced nodes."
         },
         "request": {
             "jsonrpc": "2.0",

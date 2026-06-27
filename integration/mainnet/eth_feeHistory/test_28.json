@@ -1,9 +1,9 @@
 [
     {
         "test": {
-            "tags": ["@full"],
+            "tags": [],
             "reference": "https://etherscan.io/block/5",
-            "description": "Range overshoots genesis: blockCount=10 starting from block 5 — oldestBlock clipped to 0x0; arrays length 6"
+            "description": "Range overshoots genesis: blockCount=10 starting from block 5 — oldestBlock clipped to 0x0; arrays length 6. Archive-only: block 5 bodies unavailable on snap-synced nodes."
         },
         "request": {
             "jsonrpc": "2.0",

@@ -30,7 +30,10 @@
     "response": {
       "id": 1,
       "jsonrpc": "2.0",
-      "result": "0x0122000000000000000000000000000000000000000000000000000000000000"
+      "error": {
+        "code": -32003,
+        "message": "err: max fee per blob gas less than block blob gas fee: address 0x742d35Cc6634C0532925a3b844Bc454e4438f44e blobGasFeeCap: 1, blobBaseFee: 10361296 (supplied gas 50000000)"
+      }
     }
   }
 ]

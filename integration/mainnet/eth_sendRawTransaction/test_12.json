@@ -14,7 +14,7 @@
     "response": {
       "id": 1,
       "jsonrpc": "2.0",
-      "error": {"code": -32602, "message": null}
+      "error": {"code": -32602, "message": "Invalid RLP: Unknown transaction type 9"}
     }
   }
 ]

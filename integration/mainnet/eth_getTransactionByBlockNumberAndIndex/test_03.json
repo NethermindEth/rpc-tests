@@ -1,7 +1,7 @@
 [
     {
         "test": {
-            "tags": [ "@full","@pruned"]
+            "tags": ["@full"]
         },
 "request": {
             "jsonrpc":"2.0",

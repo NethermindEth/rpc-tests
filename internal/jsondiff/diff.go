@@ -45,6 +45,11 @@ type Options struct {
 	// entirely (skipped at any depth), regardless of CheckKeys/keep state. Used for
 	// legitimately client- or network-dependent fields such as totalDifficulty.
 	IgnoreKeys map[string]bool
+	// IgnoreErrorMessage, when set, skips the "message" field of a JSON-RPC error
+	// object (identified by a sibling "code") at any depth, so only the error code
+	// is compared. Mirrors the -E / DoNotCompareError behaviour for batch responses,
+	// where per-element errors are otherwise compared including their message wording.
+	IgnoreErrorMessage bool
 }
 
 // bothScalar reports whether neither value is a container (map/slice/array),
@@ -220,6 +225,13 @@ func diffMaps(obj1, obj2 any, path string, result map[string]any, opts *Options,
 	for _, key := range keys {
 		// Excluded fields are skipped entirely at any depth.
 		if opts.IgnoreKeys[key] {
+			continue
+		}
+
+		// Ignore the "message" of a JSON-RPC error object (a "code" sibling marks
+		// it as an error), so only the error code is compared. Applies at any depth,
+		// including per-element errors in batch responses.
+		if opts.IgnoreErrorMessage && key == "message" && allKeys["code"] {
 			continue
 		}
 

@@ -104,6 +104,14 @@ func DiscoverTests(jsonDir, resultsDir string) (*DiscoveryResult, error) {
 const TagFull = "@full"
 const TagPruned = "@pruned"
 
+// TagNoReference marks a fixture that should run only in regression mode
+// (comparing the node under test against the committed fixture) and be skipped
+// when comparing against a reference node. Used for fixtures that assert
+// behaviour where Nethermind is intentionally stricter/more spec-literal than
+// the reference client (e.g. EIP-7610 storage-collision detection in
+// eth_simulateV1), so a reference comparison would diverge without any bug.
+const TagNoReference = "@no-reference"
+
 // HasTag reports whether a test fixture file carries the given tag (e.g. TagFull).
 // It first does a fast byte search of the fixture itself, then falls back to a
 // sibling "<path>.tags" sidecar (one tag per line). The sidecar is how compressed

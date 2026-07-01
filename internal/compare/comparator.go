@@ -42,6 +42,7 @@ func ProcessResponse(
 	cfg *config.Config,
 	outputDir, daemonFile, expRspFile, diffFile string,
 	outcome *testdata.TestOutcome,
+	ignoreFields []string,
 	checkFields ...string,
 ) {
 	var expectedResponse any
@@ -161,6 +162,12 @@ func ProcessResponse(
 			opts.CheckKeys = make(map[string]bool, len(checkFields))
 			for _, f := range checkFields {
 				opts.CheckKeys[f] = true
+			}
+		}
+		if len(ignoreFields) > 0 {
+			opts.IgnoreKeys = make(map[string]bool, len(ignoreFields))
+			for _, f := range ignoreFields {
+				opts.IgnoreKeys[f] = true
 			}
 		}
 		var expected, actual any

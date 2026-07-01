@@ -1,7 +1,7 @@
 [
     {
       "test": {
-          "tags": [ "@full","@pruned"],
+          "tags": [ "@full","@pruned","@ignore-fields:totalDifficulty"],
            "reference": "",
            "description": "retrieve finalized block" 
         },

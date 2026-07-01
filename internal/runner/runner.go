@@ -321,25 +321,57 @@ func printResult(w *bufio.Writer, result *testdata.TestResult, stats *Stats, cfg
 	tt := fmt.Sprintf("%-15s", result.Test.TransportType)
 	fmt.Fprintf(w, "%04d. %s::%s   ", result.Test.Number, tt, file)
 
-	if result.Outcome.Success {
-		stats.AddSuccess(result.Outcome.Metrics)
-		if cfg.VerboseLevel > 0 {
-			fmt.Fprintln(w, "OK")
-		} else {
-			fmt.Fprint(w, "OK\r")
-		}
+	kf, isKnownFailure := cfg.KnownFailures[config.NormalizeTestKey(result.Test.Name)]
+
+	addReport := func(res string, errField any) {
 		if cfg.VerboseLevel == 1 || cfg.ReportFile != "" {
 			reportMu.Lock()
 			*reportEntries = append(*reportEntries, reportEntry{
 				TestNumber:    result.Test.Number,
 				TransportType: result.Test.TransportType,
 				TestName:      result.Test.Name,
-				Result:        "OK",
-				ErrorMessage:  "",
+				Result:        res,
+				ErrorMessage:  errField,
 			})
 			reportMu.Unlock()
 		}
-	} else {
+	}
+
+	switch {
+	case result.Outcome.Success && isKnownFailure:
+		// A known failure that now passes: flag it so the entry gets removed.
+		// In strict mode it fails the run to force the cleanup.
+		stats.AddUnexpectedPass()
+		msg := fmt.Sprintf("known failure %s appears resolved — remove it from known-failures.json", kf.PR)
+		if cfg.StrictKnownFailures {
+			stats.AddFailure()
+			fmt.Fprintf(w, "failed: UNEXPECTED PASS (%s)\n", msg)
+		} else {
+			stats.AddSuccess(result.Outcome.Metrics)
+			fmt.Fprintf(w, "OK (UNEXPECTED PASS: %s)\n", msg)
+		}
+		addReport("UNEXPECTED_PASS", kf.PR)
+
+	case result.Outcome.Success:
+		stats.AddSuccess(result.Outcome.Metrics)
+		if cfg.VerboseLevel > 0 {
+			fmt.Fprintln(w, "OK")
+		} else {
+			fmt.Fprint(w, "OK\r")
+		}
+		addReport("OK", "")
+
+	case isKnownFailure:
+		// Expected failure: report but do not fail the run.
+		stats.AddKnownFailure()
+		errMsg := "no error"
+		if result.Outcome.Error != nil {
+			errMsg = result.Outcome.Error.Error()
+		}
+		fmt.Fprintf(w, "KNOWN FAIL (%s)\n", kf.PR)
+		addReport("KNOWN_FAIL", kf.PR+": "+errMsg)
+
+	default:
 		stats.AddFailure()
 		errMsg := "no error"
 		if result.Outcome.Error != nil {
@@ -351,21 +383,11 @@ func printResult(w *bufio.Writer, result *testdata.TestResult, stats *Stats, cfg
 		} else {
 			fmt.Fprintf(w, "failed: %s\n", errMsg)
 		}
-		if cfg.VerboseLevel == 1 || cfg.ReportFile != "" {
-			var errField any = errMsg
-			if result.Outcome.ErrorDetails != nil {
-				errField = result.Outcome.ErrorDetails
-			}
-			reportMu.Lock()
-			*reportEntries = append(*reportEntries, reportEntry{
-				TestNumber:    result.Test.Number,
-				TransportType: result.Test.TransportType,
-				TestName:      result.Test.Name,
-				Result:        "FAILED",
-				ErrorMessage:  errField,
-			})
-			reportMu.Unlock()
+		var errField any = errMsg
+		if result.Outcome.ErrorDetails != nil {
+			errField = result.Outcome.ErrorDetails
 		}
+		addReport("FAILED", errField)
 		if maxFailuresReached(cfg, stats) {
 			fmt.Fprintf(w, "\nABORTED: too many failures (%d), test sequence stopped early\n", cfg.MaxFailures)
 			w.Flush()

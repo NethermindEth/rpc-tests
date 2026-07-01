@@ -1,7 +1,7 @@
 [
     {
       "test": {
-          "tags": [ "@full","@pruned"],
+          "tags": ["@full"],
            "reference": "",
            "description": "retrieve earliest block" 
         },

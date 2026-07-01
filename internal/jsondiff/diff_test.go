@@ -807,3 +807,27 @@ func TestColoredString_NilBoth(t *testing.T) {
 		t.Errorf("expected no diffs for both nil, got %v", result)
 	}
 }
+
+func TestDiffJSON_IgnoreErrorMessage_Batch(t *testing.T) {
+	newBatch := func(msg string, code float64) []any {
+		return []any{
+			map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": code, "message": msg}},
+			map[string]any{"jsonrpc": "2.0", "id": float64(2), "result": "0x1"},
+		}
+	}
+	expected := newBatch("invalid request", -32600)
+	actual := newBatch("Method is required", -32600)
+
+	// Without the option, the differing per-element error message is a diff.
+	if got := DiffJSON(expected, actual, &Options{}); len(got) == 0 {
+		t.Fatalf("expected a diff for differing batch error message without IgnoreErrorMessage")
+	}
+	// With the option, only the error code is compared -> matching codes, no diff.
+	if got := DiffJSON(expected, actual, &Options{IgnoreErrorMessage: true}); len(got) != 0 {
+		t.Fatalf("expected no diff with IgnoreErrorMessage, got %v", got)
+	}
+	// A differing error code must still be reported even with the option.
+	if got := DiffJSON(expected, newBatch("Method is required", -32000), &Options{IgnoreErrorMessage: true}); len(got) == 0 {
+		t.Fatalf("expected a diff for differing batch error code even with IgnoreErrorMessage")
+	}
+}

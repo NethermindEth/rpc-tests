@@ -140,3 +140,25 @@ func CheckFields(path string) []string {
 	}
 	return strings.Split(string(data[i:i+j]), ",")
 }
+
+// TagIgnoreFields excludes specific field names from response comparison,
+// e.g. "@ignore-fields:totalDifficulty". Same byte-search style as CheckFields.
+const TagIgnoreFields = "@ignore-fields:"
+
+// IgnoreFields returns the field names to exclude from a TagIgnoreFields tag, or nil.
+func IgnoreFields(path string) []string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	i := bytes.Index(data, []byte(`"`+TagIgnoreFields))
+	if i < 0 {
+		return nil
+	}
+	i += len(TagIgnoreFields) + 1
+	j := bytes.IndexByte(data[i:], '"')
+	if j < 0 {
+		return nil
+	}
+	return strings.Split(string(data[i:i+j]), ",")
+}

@@ -41,6 +41,10 @@ type Options struct {
 	// CheckKeys, when non-empty, restricts comparison to scalar fields whose key
 	// is listed; other scalars are ignored, containers are still traversed.
 	CheckKeys map[string]bool
+	// IgnoreKeys, when non-empty, excludes fields with these keys from comparison
+	// entirely (skipped at any depth), regardless of CheckKeys/keep state. Used for
+	// legitimately client- or network-dependent fields such as totalDifficulty.
+	IgnoreKeys map[string]bool
 }
 
 // bothScalar reports whether neither value is a container (map/slice/array),
@@ -214,6 +218,11 @@ func diffMaps(obj1, obj2 any, path string, result map[string]any, opts *Options,
 	}
 
 	for _, key := range keys {
+		// Excluded fields are skipped entirely at any depth.
+		if opts.IgnoreKeys[key] {
+			continue
+		}
+
 		v1, exists1 := m1[key]
 		v2, exists2 := m2[key]
 

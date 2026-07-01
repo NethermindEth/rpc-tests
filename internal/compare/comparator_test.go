@@ -50,10 +50,37 @@ func TestProcessResponse_WithoutCompare(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x1"}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x2"}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Error("WithoutCompareResults should always succeed")
+	}
+}
+
+func TestProcessResponse_IgnoreFields(t *testing.T) {
+	dir := t.TempDir()
+	cfg := config.NewConfig()
+
+	daemonFile := filepath.Join(dir, "response.json")
+	expRspFile := filepath.Join(dir, "expected.json")
+	diffFile := filepath.Join(dir, "diff.json")
+
+	// Responses differ only in result.totalDifficulty (a network-dependent field).
+	response := map[string]any{"jsonrpc": "2.0", "id": float64(1),
+		"result": map[string]any{"number": "0x1", "totalDifficulty": "0xabc"}}
+	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1),
+		"result": map[string]any{"number": "0x1"}}
+
+	outcome := &testdata.TestOutcome{}
+	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome, nil)
+	if outcome.Success {
+		t.Error("differing totalDifficulty should fail without ignore-fields")
+	}
+
+	outcome = &testdata.TestOutcome{}
+	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome, []string{"totalDifficulty"})
+	if !outcome.Success {
+		t.Errorf("ignore-fields should skip totalDifficulty, error: %v", outcome.Error)
 	}
 }
 
@@ -65,7 +92,7 @@ func TestProcessResponse_ExactMatch(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x1"}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x1"}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Errorf("exact match should succeed, error: %v", outcome.Error)
@@ -83,7 +110,7 @@ func TestProcessResponse_NullExpectedResult(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0xabc"}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": nil}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Errorf("null expected result should be accepted, error: %v", outcome.Error)
@@ -98,7 +125,7 @@ func TestProcessResponse_NullExpectedError(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32000), "message": "some error"}}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": nil}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Errorf("null expected error should be accepted, error: %v", outcome.Error)
@@ -113,7 +140,7 @@ func TestProcessResponse_EmptyExpected(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x1"}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1)}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Errorf("empty expected (just jsonrpc+id) should be accepted, error: %v", outcome.Error)
@@ -129,7 +156,7 @@ func TestProcessResponse_DoNotCompareError_SameCode(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32000), "message": "err1"}}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32000), "message": "err2"}}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Errorf("DoNotCompareError should accept same error code with different message, error: %v", outcome.Error)
@@ -150,7 +177,7 @@ func TestProcessResponse_DoNotCompareError_DifferentCode(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32000), "message": "err1"}}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32001), "message": "err2"}}
 
-	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome, nil)
 
 	if outcome.Success {
 		t.Error("DoNotCompareError should reject different error codes")
@@ -165,7 +192,7 @@ func TestProcessResponse_NullMessageSentinel_SameCode(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32602), "message": "some informative implementation-specific message"}}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32602), "message": nil}}
 
-	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, "", "", "", outcome, nil)
 
 	if !outcome.Success {
 		t.Errorf("\"message\": null sentinel should accept matching code regardless of message, error: %v", outcome.Error)
@@ -185,7 +212,7 @@ func TestProcessResponse_NullMessageSentinel_DifferentCode(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32000), "message": "any"}}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "error": map[string]any{"code": float64(-32602), "message": nil}}
 
-	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome, nil)
 
 	if outcome.Success {
 		t.Error("\"message\": null sentinel should reject mismatched code")
@@ -205,7 +232,7 @@ func TestProcessResponse_DiffMismatch_JsonDiffGo(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x1"}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x2"}
 
-	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome, nil)
 
 	if outcome.Success {
 		t.Error("mismatched responses should fail")
@@ -229,7 +256,7 @@ func TestProcessResponse_DiffMismatch_SingleTest_HasColoredDiff(t *testing.T) {
 	response := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x1"}
 	expected := map[string]any{"jsonrpc": "2.0", "id": float64(1), "result": "0x2"}
 
-	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome)
+	ProcessResponse(response, nil, expected, cfg, dir, daemonFile, expRspFile, diffFile, outcome, nil)
 
 	if outcome.ColoredDiff == "" {
 		t.Error("single test mode should produce colored diff on mismatch")

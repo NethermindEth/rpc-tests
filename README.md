@@ -28,6 +28,25 @@ make
 
 Check out the dedicated guide in [Integration Tests](./integration/README.md).
 
+### Known (expected) failures
+
+`known-failures.json` (repo root) lists tests that are expected to fail while a fix
+is pending, keyed by `"<api>/<test>"` (extension-insensitive) with a linked PR:
+
+```json
+{
+  "eth_getBalance/test_40": { "pr": "ethereum/go-ethereum#35271", "note": "geth -32000 vs NM -32602; geth-side fix" }
+}
+```
+
+Listed tests still **run**, but:
+
+- a listed test that **fails** is reported as `KNOWN_FAIL (<pr>)` and does **not** fail the run;
+- a listed test that **passes** is reported as `UNEXPECTED_PASS` (a warning to remove the entry) — with `--strict-known-failures` this fails the run to force the cleanup.
+
+Flags: `--known-failures <path>` (default `known-failures.json`), `--strict-known-failures`.
+Prefer this over excluding/skipping a test: coverage is preserved, and you're told the moment the fix lands.
+
 ## Performance Testing
 
 Check out the dedicated guide in [Performance Tests](./perf/README.md).

@@ -9,11 +9,13 @@ import (
 
 // Stats aggregates metrics and counts across all tests.
 type Stats struct {
-	SuccessTests   int
-	FailedTests    int
-	ExecutedTests  int
-	SkippedTests   int
-	ScheduledTests int
+	SuccessTests     int
+	FailedTests      int
+	KnownFailures    int
+	UnexpectedPasses int
+	ExecutedTests    int
+	SkippedTests     int
+	ScheduledTests   int
 
 	TotalRoundTripTime     time.Duration
 	TotalMarshallingTime   time.Duration
@@ -39,6 +41,18 @@ func (s *Stats) AddFailure() {
 	s.ExecutedTests++
 }
 
+// AddKnownFailure records a failure that is listed in the known-failures file.
+// It counts as executed but NOT as a failure, so it does not fail the run.
+func (s *Stats) AddKnownFailure() {
+	s.KnownFailures++
+	s.ExecutedTests++
+}
+
+// AddUnexpectedPass records a test that passed but is listed as a known failure.
+func (s *Stats) AddUnexpectedPass() {
+	s.UnexpectedPasses++
+}
+
 // PrintSummary prints the v1-compatible summary output.
 func (s *Stats) PrintSummary(startTime time.Time, elapsed time.Duration, iterations, totalAPIs, totalTests int) {
 	fmt.Println("\n                                                                                                                  ")
@@ -57,4 +71,10 @@ func (s *Stats) PrintSummary(startTime time.Time, elapsed time.Duration, iterati
 	fmt.Printf("Number of executed tests:     %d\n", s.ExecutedTests)
 	fmt.Printf("Number of success tests:      %d\n", s.SuccessTests)
 	fmt.Printf("Number of failed tests:       %d\n", s.FailedTests)
+	if s.KnownFailures > 0 {
+		fmt.Printf("Number of known failures:     %d\n", s.KnownFailures)
+	}
+	if s.UnexpectedPasses > 0 {
+		fmt.Printf("Number of unexpected passes:  %d\n", s.UnexpectedPasses)
+	}
 }

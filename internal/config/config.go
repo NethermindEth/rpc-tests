@@ -119,6 +119,13 @@ type Config struct {
 	// Failure cap
 	MaxFailures int // stop after this many failures (0 = unlimited)
 
+	// Known (expected) failures: tests here still run, but a failure is reported
+	// as KNOWN_FAIL and does not fail the run; a listed test that passes is reported
+	// as UNEXPECTED_PASS (warn, or fail the run when StrictKnownFailures is set).
+	// Keyed by "<api>/<test>" without file extension (e.g. "eth_getBalance/test_40").
+	KnownFailures       map[string]KnownFailure
+	StrictKnownFailures bool
+
 	// Report
 	ReportFile string
 

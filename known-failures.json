@@ -1,0 +1,26 @@
+{
+  "eth_sendRawTransaction/test_05": {
+    "pr": "NethermindEth/nethermind#12003",
+    "note": "NM returns -32000 'Invalid RLP' for malformed hex; should be -32602 (invalid params). NM-side fix."
+  },
+  "eth_sendRawTransaction/test_06": {
+    "pr": "NethermindEth/nethermind#12003",
+    "note": "Same as test_05 (no-0x-prefix hex). NM-side fix."
+  },
+  "eth_sendRawTransaction/test_21": {
+    "pr": "NethermindEth/nethermind#12003",
+    "note": "Same as test_05 (odd-length hex). NM-side fix."
+  },
+  "eth_getBalance/test_40": {
+    "pr": "ethereum/go-ethereum#35271",
+    "note": "geth returns -32000 for an empty {} EIP-1898 block param; NM's -32602 is spec-correct. geth-side fix (awaiting geth release)."
+  },
+  "eth_sendRawTransaction/test_23": {
+    "pr": "ethereum/go-ethereum#35129",
+    "note": "geth returns -32000 for an empty raw tx; NM's -32602 is spec-correct. geth-side fix (awaiting geth release)."
+  },
+  "eth_estimateGas/test_28": {
+    "pr": "ethereum/go-ethereum#35228",
+    "note": "geth does not apply movePrecompileToAddress in the gas estimator; NM's 0x5208 is correct. geth-side fix (awaiting geth release)."
+  }
+}

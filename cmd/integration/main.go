@@ -118,6 +118,10 @@ func parseFlags(cfg *config.Config) error {
 	reportFile := flag.String("R", "", "write CSV summary report to file")
 	flag.StringVar(reportFile, "report-file", "", "write CSV summary report to file")
 
+	knownFailuresPath := flag.String("known-failures", "known-failures.json", "path to known-failures JSON file; listed tests that fail are reported as KNOWN_FAIL and do not fail the run")
+
+	strictKnownFailures := flag.Bool("strict-known-failures", false, "fail the run when a known failure unexpectedly passes (forces cleanup of known-failures.json)")
+
 	cpuProfile := flag.String("cpuprofile", "", "write cpu profile to file")
 	memProfile := flag.String("memprofile", "", "write memory profile to file")
 	traceFile := flag.String("trace", "", "write execution trace to file")
@@ -153,6 +157,12 @@ func parseFlags(cfg *config.Config) error {
 	cfg.ArchiveNode = *archiveNode
 	cfg.PrunedNode = *prunedNode
 	cfg.MaxFailures = *maxFailures
+	cfg.StrictKnownFailures = *strictKnownFailures
+	knownFailures, err := config.LoadKnownFailures(*knownFailuresPath)
+	if err != nil {
+		return err
+	}
+	cfg.KnownFailures = knownFailures
 	cfg.ReportFile = *reportFile
 	cfg.CpuProfile = *cpuProfile
 	cfg.MemProfile = *memProfile

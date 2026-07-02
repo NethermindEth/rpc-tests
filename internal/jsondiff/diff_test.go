@@ -831,3 +831,19 @@ func TestDiffJSON_IgnoreErrorMessage_Batch(t *testing.T) {
 		t.Fatalf("expected a diff for differing batch error code even with IgnoreErrorMessage")
 	}
 }
+
+func TestDiffJSON_Tolerance(t *testing.T) {
+	exp := map[string]any{"result": "0x578e"} // 22414
+	act := map[string]any{"result": "0x56e6"} // 22246, ~0.75% less
+
+	if got := DiffJSON(exp, act, &Options{}); len(got) == 0 {
+		t.Fatal("expected a diff without tolerance")
+	}
+	if got := DiffJSON(exp, act, &Options{Tolerance: 0.05}); len(got) != 0 {
+		t.Fatalf("expected no diff within 5%% tolerance, got %v", got)
+	}
+	far := map[string]any{"result": "0x4e20"} // 20000, ~11% less
+	if got := DiffJSON(exp, far, &Options{Tolerance: 0.05}); len(got) == 0 {
+		t.Fatal("expected a diff beyond 5%% tolerance")
+	}
+}

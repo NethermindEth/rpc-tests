@@ -43,6 +43,7 @@ func ProcessResponse(
 	outputDir, daemonFile, expRspFile, diffFile string,
 	outcome *testdata.TestOutcome,
 	ignoreFields []string,
+	tolerance float64,
 	checkFields ...string,
 ) {
 	var expectedResponse any
@@ -157,7 +158,7 @@ func ProcessResponse(
 	var same bool
 	if cfg.DiffKind == config.JsonDiffGo {
 		outcome.Metrics.ComparisonCount++
-		opts := &jsondiff.Options{SortArrays: true, IgnoreErrorMessage: cfg.DoNotCompareError}
+		opts := &jsondiff.Options{SortArrays: true, IgnoreErrorMessage: cfg.DoNotCompareError, Tolerance: tolerance}
 		if len(checkFields) > 0 {
 			opts.CheckKeys = make(map[string]bool, len(checkFields))
 			for _, f := range checkFields {

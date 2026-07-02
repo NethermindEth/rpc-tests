@@ -19,6 +19,17 @@ import (
 	"github.com/erigontech/rpc-tests/internal/testdata"
 )
 
+const (
+	// latestBlockMaxSkew is the largest head difference tolerated between the node under test and
+	// the reference when resolving the block to pin: two independently-synced nodes are routinely
+	// a block or two apart, and that is not a "not synced" condition.
+	latestBlockMaxSkew uint64 = 4
+	// latestRepinRetries bounds how many times a failed pinnable latest test is retried against a
+	// freshly-resolved block, so a long run doesn't fail when the node under test prunes the state
+	// of the originally-pinned block. A genuine discrepancy reproduces at the fresh block and fails.
+	latestRepinRetries = 2
+)
+
 // Run executes the full test suite matching v1 runMain behavior.
 func Run(ctx context.Context, cancelCtx context.CancelFunc, cfg *config.Config) (int, error) {
 	startTime := time.Now()
@@ -42,7 +53,7 @@ func Run(ctx context.Context, cancelCtx context.CancelFunc, cfg *config.Config) 
 	if cfg.VerifyWithDaemon && cfg.TestsOnLatestBlock {
 		server1 := fmt.Sprintf("%s:%d", cfg.DaemonOnHost, cfg.ServerPort)
 		latestBlock, err := internalrpc.GetConsistentLatestBlock(
-			cfg.VerboseLevel, server1, cfg.ExternalProviderURL, 10, 1*time.Second)
+			cfg.VerboseLevel, server1, cfg.ExternalProviderURL, 30, 2*time.Second, latestBlockMaxSkew)
 		if err != nil {
 			fmt.Println("sync on latest block number failed ", err)
 			return -1, err

@@ -171,6 +171,45 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 		if !outcome.Success {
 			enrichErrorDetails(outcome, target, request)
 		}
+
+		// A pinnable latest test can fail if the node under test pruned the pinned block's state
+		// during a long run. Re-resolve a fresh block both nodes have and retry before accepting
+		// the failure; a genuine discrepancy reproduces at the fresh block and still fails. Uses
+		// cmd.Request (the un-pinned original) to re-pin. Skipped for flaky no-param methods.
+		if !outcome.Success && cfg.TestsOnLatestBlock && cfg.PinnedLatestBlock > 0 && !filter.IsFlakyLatest(cfg.Net, jsonFile) {
+			server1 := fmt.Sprintf("%s:%d", cfg.DaemonOnHost, cfg.ServerPort)
+			pinBlock := cfg.PinnedLatestBlock
+			for attempt := 0; !outcome.Success && attempt < latestRepinRetries; attempt++ {
+				fresh, ferr := internalrpc.GetConsistentLatestBlock(cfg.VerboseLevel, server1, cfg.ExternalProviderURL, 10, 1*time.Second, latestBlockMaxSkew)
+				if ferr != nil || fresh == pinBlock {
+					break
+				}
+				pinBlock = fresh
+				retryReq := pinLatestBlock(cmd.Request, fresh)
+				*outcome = testdata.TestOutcome{}
+				var retryResult, retryResult1 any
+				if m, e := client.Call(ctx, target, retryReq, &retryResult); e != nil {
+					outcome.Error = e
+					enrichErrorDetails(outcome, target, retryReq)
+					continue
+				} else {
+					outcome.Metrics.RoundTripTime += m.RoundTripTime
+					outcome.Metrics.UnmarshallingTime += m.UnmarshallingTime
+				}
+				if m, e := referenceClient.Call(ctx, target1, retryReq, &retryResult1); e != nil {
+					outcome.Error = e
+					enrichErrorDetails(outcome, target1, retryReq)
+					continue
+				} else {
+					outcome.Metrics.RoundTripTime += m.RoundTripTime
+					outcome.Metrics.UnmarshallingTime += m.UnmarshallingTime
+				}
+				compare.ProcessResponse(retryResult, retryResult1, nil, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, checkFields...)
+				if !outcome.Success {
+					enrichErrorDetails(outcome, target, retryReq)
+				}
+			}
+		}
 	}
 }
 

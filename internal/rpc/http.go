@@ -255,15 +255,20 @@ func parseHexUint64(s string) (uint64, error) {
 	return result, nil
 }
 
-// GetConsistentLatestBlock retries until both servers agree on the latest block.
-func GetConsistentLatestBlock(verbose int, server1URL, server2URL string, maxRetries int, retryDelay time.Duration) (uint64, error) {
+// GetConsistentLatestBlock returns a recent block that BOTH servers have, so callers can pin
+// requests to it. Two independently-synced nodes are frequently a block or two apart at any
+// instant (normal propagation lag), so it does not require their heads to be exactly equal:
+// when they differ by no more than maxSkew it returns the lower head, which the lagging node is
+// guaranteed to have. It retries only while the skew exceeds maxSkew or a node is unreachable,
+// and errors only if that persists across all retries — a genuine "node under test not synced"
+// signal rather than routine lag.
+func GetConsistentLatestBlock(verbose int, server1URL, server2URL string, maxRetries int, retryDelay time.Duration, maxSkew uint64) (uint64, error) {
 	client := NewClient("http", "", verbose)
 	var bn1, bn2 uint64
+	var err1, err2 error
 
 	for i := range maxRetries {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-		var err1, err2 error
 		bn1, _, err1 = GetLatestBlockNumber(ctx, client, server1URL)
 		bn2, _, err2 = GetLatestBlockNumber(ctx, client, server2URL)
 		cancel()
@@ -272,8 +277,14 @@ func GetConsistentLatestBlock(verbose int, server1URL, server2URL string, maxRet
 			fmt.Printf("retry: %d nodes: %s, %s latest blocks: %d, %d\n", i+1, server1URL, server2URL, bn1, bn2)
 		}
 
-		if err1 == nil && err2 == nil && bn1 == bn2 {
-			return bn1, nil
+		if err1 == nil && err2 == nil {
+			skew := bn1 - bn2
+			if bn2 > bn1 {
+				skew = bn2 - bn1
+			}
+			if skew <= maxSkew {
+				return min(bn1, bn2), nil
+			}
 		}
 
 		if i < maxRetries-1 {
@@ -281,5 +292,8 @@ func GetConsistentLatestBlock(verbose int, server1URL, server2URL string, maxRet
 		}
 	}
 
-	return 0, fmt.Errorf("nodes not synced, last values: %d / %d", bn1, bn2)
+	if err1 != nil || err2 != nil {
+		return 0, fmt.Errorf("could not read latest block from both nodes (%s: %v, %s: %v)", server1URL, err1, server2URL, err2)
+	}
+	return 0, fmt.Errorf("nodes not within %d blocks after %d retries, last values: %d / %d", maxSkew, maxRetries, bn1, bn2)
 }

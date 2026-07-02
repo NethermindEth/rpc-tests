@@ -12,6 +12,7 @@ type Stats struct {
 	SuccessTests     int
 	FailedTests      int
 	KnownFailures    int
+	FlakyFailures    int
 	UnexpectedPasses int
 	ExecutedTests    int
 	SkippedTests     int
@@ -48,6 +49,13 @@ func (s *Stats) AddKnownFailure() {
 	s.ExecutedTests++
 }
 
+// AddFlakyFailure records a failure of a test flagged as flaky-on-latest. Like a known
+// failure it counts as executed but NOT as a failure, so it does not fail the run.
+func (s *Stats) AddFlakyFailure() {
+	s.FlakyFailures++
+	s.ExecutedTests++
+}
+
 // AddUnexpectedPass records a test that passed but is listed as a known failure.
 func (s *Stats) AddUnexpectedPass() {
 	s.UnexpectedPasses++
@@ -73,6 +81,9 @@ func (s *Stats) PrintSummary(startTime time.Time, elapsed time.Duration, iterati
 	fmt.Printf("Number of failed tests:       %d\n", s.FailedTests)
 	if s.KnownFailures > 0 {
 		fmt.Printf("Number of known failures:     %d\n", s.KnownFailures)
+	}
+	if s.FlakyFailures > 0 {
+		fmt.Printf("Number of flaky failures:     %d\n", s.FlakyFailures)
 	}
 	if s.UnexpectedPasses > 0 {
 		fmt.Printf("Number of unexpected passes:  %d\n", s.UnexpectedPasses)

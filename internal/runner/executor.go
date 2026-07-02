@@ -15,6 +15,7 @@ import (
 
 	"github.com/erigontech/rpc-tests/internal/compare"
 	"github.com/erigontech/rpc-tests/internal/config"
+	"github.com/erigontech/rpc-tests/internal/filter"
 	internalrpc "github.com/erigontech/rpc-tests/internal/rpc"
 	"github.com/erigontech/rpc-tests/internal/testdata"
 )
@@ -112,36 +113,55 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 		}
 	} else {
 		target = cfg.GetTarget(config.DaemonOnDefaultPort, descriptor.Name)
-
-		var result any
-		metrics, err := client.Call(ctx, target, request, &result)
-		outcome.Metrics.RoundTripTime += metrics.RoundTripTime
-		outcome.Metrics.UnmarshallingTime += metrics.UnmarshallingTime
-		if err != nil {
-			outcome.Error = err
-			enrichErrorDetails(outcome, target, request)
-			return
-		}
-		if cfg.VerboseLevel > 2 {
-			fmt.Printf("%s: [%v]\n", cfg.DaemonUnderTest, result)
-		}
-
 		target1 := cfg.GetTarget(cfg.DaemonAsReference, descriptor.Name)
 		referenceClient := client
 		if len(cfg.ExternalProviderHeaders) > 0 {
 			referenceClient = internalrpc.NewClientWithHeaders(transportType, "", cfg.VerboseLevel, cfg.ExternalProviderHeaders)
 		}
-		var result1 any
-		metrics1, err := referenceClient.Call(ctx, target1, request, &result1)
-		outcome.Metrics.RoundTripTime += metrics1.RoundTripTime
-		outcome.Metrics.UnmarshallingTime += metrics1.UnmarshallingTime
-		if err != nil {
-			outcome.Error = err
-			enrichErrorDetails(outcome, target1, request)
-			return
+
+		// Pin latest-block tests to a concrete block so both nodes compare the same immutable
+		// block instead of racing on their live heads. No-op for requests without a latest/pending tag.
+		if cfg.TestsOnLatestBlock && cfg.PinnedLatestBlock > 0 {
+			request = pinLatestBlock(request, cfg.PinnedLatestBlock)
+		}
+
+		var result, result1 any
+		if cfg.TestsOnLatestBlock && filter.IsFlakyLatest(cfg.Net, jsonFile) {
+			// No-param head methods (eth_baseFee, eth_gasPrice, ...) have no block arg to pin,
+			// so use a best-effort head guard; a residual failure is classified FLAKY (non-fatal).
+			metrics, stable, err := callBothAtStableHead(ctx, cfg, client, referenceClient, target, target1, request, &result, &result1)
+			outcome.Metrics.RoundTripTime += metrics.RoundTripTime
+			outcome.Metrics.UnmarshallingTime += metrics.UnmarshallingTime
+			if err != nil {
+				outcome.Error = err
+				enrichErrorDetails(outcome, target, request)
+				return
+			}
+			if !stable {
+				outcome.Error = fmt.Errorf("could not obtain a consistent latest head across %d attempts (node under test lagging the reference?)", cfg.LatestRetries)
+				enrichErrorDetails(outcome, target, request)
+				return
+			}
+		} else {
+			metrics, err := client.Call(ctx, target, request, &result)
+			outcome.Metrics.RoundTripTime += metrics.RoundTripTime
+			outcome.Metrics.UnmarshallingTime += metrics.UnmarshallingTime
+			if err != nil {
+				outcome.Error = err
+				enrichErrorDetails(outcome, target, request)
+				return
+			}
+			metrics1, err := referenceClient.Call(ctx, target1, request, &result1)
+			outcome.Metrics.RoundTripTime += metrics1.RoundTripTime
+			outcome.Metrics.UnmarshallingTime += metrics1.UnmarshallingTime
+			if err != nil {
+				outcome.Error = err
+				enrichErrorDetails(outcome, target1, request)
+				return
+			}
 		}
 		if cfg.VerboseLevel > 2 {
-			fmt.Printf("%s: [%v]\n", cfg.DaemonAsReference, result1)
+			fmt.Printf("%s: [%v]\n%s: [%v]\n", cfg.DaemonUnderTest, result, cfg.DaemonAsReference, result1)
 		}
 
 		daemonFile = outputAPIFilename + config.GetJSONFilenameExt(config.DaemonOnDefaultPort, target)
@@ -152,6 +172,77 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 			enrichErrorDetails(outcome, target, request)
 		}
 	}
+}
+
+// pinLatestBlock rewrites "latest"/"pending" block tags in a JSON-RPC request to a concrete
+// block number, so a node-vs-node comparison resolves the same immutable block on both sides
+// instead of racing on their live heads. It is a no-op for requests that carry no such tag
+// (e.g. eth_baseFee, which takes no block argument). Fixtures use these tokens only as block
+// parameters, so a literal token replacement is safe.
+func pinLatestBlock(request []byte, block uint64) []byte {
+	pinned := fmt.Sprintf("\"0x%x\"", block)
+	s := strings.ReplaceAll(string(request), "\"latest\"", pinned)
+	s = strings.ReplaceAll(s, "\"pending\"", pinned)
+	return []byte(s)
+}
+
+// callBothAtStableHead issues request to both the node under test and the reference,
+// retrying until both served it at the same, unchanged latest block. This keeps
+// latest-block comparisons (eth_baseFee, eth_gasPrice, eth_blockNumber, ...) from flaking
+// on a one-block head skew that arrives between the two calls. testResult and refResult
+// are pointers the caller owns for the subsequent comparison. It reports stable=false when
+// no consistent window is found within cfg.LatestRetries attempts (e.g. the node under test
+// is persistently lagging the reference).
+func callBothAtStableHead(
+	ctx context.Context,
+	cfg *config.Config,
+	testClient, refClient *internalrpc.Client,
+	testTarget, refTarget string,
+	request []byte,
+	testResult, refResult any,
+) (metrics internalrpc.Metrics, stable bool, err error) {
+	const headRetryDelay = 500 * time.Millisecond
+	attempts := cfg.LatestRetries
+	if attempts < 1 {
+		attempts = 1
+	}
+
+	for attempt := range attempts {
+		// Both nodes must already be on the same head before we issue the request.
+		testHeadBefore, _, errTB := internalrpc.GetLatestBlockNumber(ctx, testClient, testTarget)
+		refHeadBefore, _, errRB := internalrpc.GetLatestBlockNumber(ctx, refClient, refTarget)
+		if errTB != nil || errRB != nil || testHeadBefore != refHeadBefore {
+			if attempt < attempts-1 {
+				time.Sleep(headRetryDelay)
+			}
+			continue
+		}
+
+		var m internalrpc.Metrics
+		if m, err = testClient.Call(ctx, testTarget, request, testResult); err != nil {
+			return metrics, false, err
+		}
+		metrics.RoundTripTime += m.RoundTripTime
+		metrics.UnmarshallingTime += m.UnmarshallingTime
+
+		if m, err = refClient.Call(ctx, refTarget, request, refResult); err != nil {
+			return metrics, false, err
+		}
+		metrics.RoundTripTime += m.RoundTripTime
+		metrics.UnmarshallingTime += m.UnmarshallingTime
+
+		// Accept only if neither node advanced while serving the request; otherwise the
+		// two responses may be from different heads, so retry a fresh window.
+		testHeadAfter, _, errTA := internalrpc.GetLatestBlockNumber(ctx, testClient, testTarget)
+		refHeadAfter, _, errRA := internalrpc.GetLatestBlockNumber(ctx, refClient, refTarget)
+		if errTA == nil && errRA == nil && testHeadAfter == testHeadBefore && refHeadAfter == testHeadBefore {
+			return metrics, true, nil
+		}
+		if attempt < attempts-1 {
+			time.Sleep(headRetryDelay)
+		}
+	}
+	return metrics, false, nil
 }
 
 // mustAtoi converts a string to int, returning 0 on failure.

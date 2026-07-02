@@ -92,6 +92,7 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 
 	checkFields := testdata.CheckFields(filepath.Join(cfg.JSONDir, jsonFile))
 	ignoreFields := testdata.IgnoreFields(filepath.Join(cfg.JSONDir, jsonFile))
+	tolerance := testdata.Tolerance(filepath.Join(cfg.JSONDir, jsonFile))
 
 	if !cfg.VerifyWithDaemon {
 		var result any
@@ -107,7 +108,7 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 			fmt.Printf("%s: [%v]\n", cfg.DaemonUnderTest, result)
 		}
 
-		compare.ProcessResponse(result, nil, cmd.Response, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, checkFields...)
+		compare.ProcessResponse(result, nil, cmd.Response, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, tolerance, checkFields...)
 		if !outcome.Success {
 			enrichErrorDetails(outcome, target, request)
 		}
@@ -167,7 +168,7 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 		daemonFile = outputAPIFilename + config.GetJSONFilenameExt(config.DaemonOnDefaultPort, target)
 		expRspFile = outputAPIFilename + config.GetJSONFilenameExt(cfg.DaemonAsReference, target1)
 
-		compare.ProcessResponse(result, result1, nil, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, checkFields...)
+		compare.ProcessResponse(result, result1, nil, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, tolerance, checkFields...)
 		if !outcome.Success {
 			enrichErrorDetails(outcome, target, request)
 		}

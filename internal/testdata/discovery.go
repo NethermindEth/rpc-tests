@@ -170,3 +170,31 @@ func IgnoreFields(path string) []string {
 	}
 	return strings.Split(string(data[i:i+j]), ",")
 }
+
+// TagTolerance allows numeric (hex QUANTITY) result values to differ by up to a
+// percentage, e.g. "@tolerance:10" for 10%. Used for inherently approximate
+// results such as eth_estimateGas, where clients can legitimately differ slightly.
+const TagTolerance = "@tolerance:"
+
+// Tolerance returns the fractional tolerance from a TagTolerance tag (e.g. 0.10
+// for "@tolerance:10"), or 0 if absent/invalid.
+func Tolerance(path string) float64 {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+	i := bytes.Index(data, []byte(`"`+TagTolerance))
+	if i < 0 {
+		return 0
+	}
+	i += len(TagTolerance) + 1
+	j := bytes.IndexByte(data[i:], '"')
+	if j < 0 {
+		return 0
+	}
+	pct, err := strconv.ParseFloat(strings.TrimSpace(string(data[i:i+j])), 64)
+	if err != nil || pct <= 0 {
+		return 0
+	}
+	return pct / 100
+}

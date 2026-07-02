@@ -3,6 +3,7 @@ package jsondiff
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"reflect"
 	"sort"
 	"strings"
@@ -50,6 +51,53 @@ type Options struct {
 	// is compared. Mirrors the -E / DoNotCompareError behaviour for batch responses,
 	// where per-element errors are otherwise compared including their message wording.
 	IgnoreErrorMessage bool
+	// Tolerance, when > 0, treats two numeric scalar leaves (hex QUANTITY strings or
+	// JSON numbers) as equal if they differ by at most this fraction of the larger
+	// magnitude (e.g. 0.10 for 10%). Used for approximate results like eth_estimateGas.
+	Tolerance float64
+}
+
+// numericValue parses a JSON scalar as a number: a hex QUANTITY string ("0x...")
+// or a JSON number. Returns false for anything else.
+func numericValue(v any) (*big.Float, bool) {
+	switch x := v.(type) {
+	case float64:
+		return big.NewFloat(x), true
+	case string:
+		s := strings.TrimSpace(x)
+		if len(s) > 2 && (s[0:2] == "0x" || s[0:2] == "0X") {
+			n, ok := new(big.Int).SetString(s[2:], 16)
+			if ok {
+				return new(big.Float).SetInt(n), true
+			}
+		}
+	}
+	return nil, false
+}
+
+// scalarsEqual reports whether two scalar leaves are equal, honouring a relative
+// numeric tolerance when configured.
+func scalarsEqual(a, b any, opts *Options) bool {
+	if reflect.DeepEqual(a, b) {
+		return true
+	}
+	if opts == nil || opts.Tolerance <= 0 {
+		return false
+	}
+	fa, oka := numericValue(a)
+	fb, okb := numericValue(b)
+	if !oka || !okb {
+		return false
+	}
+	d := new(big.Float).Abs(new(big.Float).Sub(fa, fb))
+	max := new(big.Float).Abs(fa)
+	if ab := new(big.Float).Abs(fb); ab.Cmp(max) > 0 {
+		max = ab
+	}
+	if max.Sign() == 0 {
+		return d.Sign() == 0
+	}
+	return d.Cmp(new(big.Float).Mul(max, big.NewFloat(opts.Tolerance))) <= 0
 }
 
 // bothScalar reports whether neither value is a container (map/slice/array),
@@ -185,7 +233,7 @@ func diff(obj1, obj2 any, path string, result map[string]any, opts *Options, kee
 		if !keep {
 			return
 		}
-		if !reflect.DeepEqual(obj1, obj2) {
+		if !scalarsEqual(obj1, obj2, opts) {
 			result[path] = map[string]any{"__old": obj1, "__new": obj2}
 		} else if opts.KeepUnchangedValues {
 			result[path] = map[string]any{"__old": obj1, "__new": obj2}
@@ -343,7 +391,7 @@ func collectDiffsRec(obj1, obj2 any, path string, diffs *[]Diff, opts *Options, 
 		if !keep {
 			return
 		}
-		if !reflect.DeepEqual(obj1, obj2) {
+		if !scalarsEqual(obj1, obj2, opts) {
 			*diffs = append(*diffs, Diff{Type: DiffUpdate, Path: path, OldValue: obj1, NewValue: obj2})
 		} else {
 			*diffs = append(*diffs, Diff{Type: DiffEqual, Path: path, NewValue: obj2})

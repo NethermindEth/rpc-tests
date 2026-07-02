@@ -22,5 +22,9 @@
   "eth_estimateGas/test_28": {
     "pr": "ethereum/go-ethereum#35228",
     "note": "geth does not apply movePrecompileToAddress in the gas estimator; NM's 0x5208 is correct. geth-side fix (awaiting geth release)."
+  },
+  "eth_getRawTransactionByBlockNumberAndIndex/test_13": {
+    "pr": "ethereum/go-ethereum#35227",
+    "note": "geth returns '0x' for a not-found raw tx; NM returns null (spec-correct). geth-side fix (awaiting geth release)."
   }
 }

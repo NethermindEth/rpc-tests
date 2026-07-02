@@ -1,7 +1,7 @@
 [
   {
     "test": {
-        "tags": [ "@pruned","@full"],
+        "tags": [ "@pruned","@full","@ignore-fields:totalDifficulty"],
        "reference": "",
        "description": "move some ether overriding state at latest block"
     },

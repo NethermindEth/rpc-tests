@@ -1,7 +1,7 @@
 [
     {
         "test": {
-            "tags": [ "@full","@pruned"],
+            "tags": [ "@full","@pruned","@no-reference"],
            "reference": "",
            "description": ""
         },

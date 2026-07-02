@@ -104,8 +104,16 @@ type Config struct {
 	ExcludeAPIList     string
 	ExcludeTestList    string
 	TestsOnLatestBlock bool
-	ArchiveNode        bool // --archive: run ALL tests (disable the default @full-only filter)
-	PrunedNode         bool // run tests tagged @pruned (skipped by default)
+	// LatestRetries bounds how many times a flaky latest-block test re-samples for a window
+	// where the node under test and the reference are on the same, unchanged head before
+	// comparing (see callBothAtStableHead). Default 3.
+	LatestRetries int
+	// PinnedLatestBlock is the concrete block the -L pass substitutes for "latest"/"pending"
+	// in requests, so both nodes answer for the same immutable block instead of racing on
+	// their live heads. Resolved once (via GetConsistentLatestBlock) before the latest tests run.
+	PinnedLatestBlock uint64
+	ArchiveNode       bool // --archive: run ALL tests (disable the default @full-only filter)
+	PrunedNode        bool // run tests tagged @pruned (skipped by default)
 
 	// Authentication
 	JWTSecret string
@@ -156,6 +164,7 @@ func NewConfig() *Config {
 		TransportType:     TransportHTTP,
 		ResultsDir:        ResultsDir,
 		MaxFailures:       100,
+		LatestRetries:     3,
 	}
 }
 

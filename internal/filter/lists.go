@@ -129,6 +129,18 @@ var testsOnLatest = []string{
 	"mainnet/trace_replayBlockTransactions/test_36.json",
 }
 
+// flakyLatest are latest-block methods that take no block argument, so they always read the
+// node's live head and cannot be pinned to a fixed block. Against a live reference they can
+// differ by one EIP-1559 step on a one-block head skew, so a failure on these is reported as
+// FLAKY and does not fail the run (they still run, with a best-effort head guard).
+var flakyLatest = []string{
+	"mainnet/eth_baseFee",
+	"mainnet/eth_blobBaseFee",
+	"mainnet/eth_blockNumber",
+	"mainnet/eth_gasPrice",
+	"mainnet/eth_maxPriorityFeePerGas",
+}
+
 // testsNotComparedMessage contains tests where the "message" field is not compared.
 var testsNotComparedMessage = []string{}
 

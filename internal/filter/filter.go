@@ -164,6 +164,19 @@ func (f *TestFilter) VerifyInLatestList(testName string) bool {
 	return false
 }
 
+// IsFlakyLatest reports whether testName is a no-block-argument latest method whose
+// live-comparison result is inherently non-deterministic (see flakyLatest). Such a test
+// still runs, but a failure is reported as FLAKY and does not fail the run.
+func IsFlakyLatest(net, testName string) bool {
+	fullName := net + "/" + testName
+	for _, flaky := range flakyLatest {
+		if strings.Contains(fullName, flaky) {
+			return true
+		}
+	}
+	return false
+}
+
 // CheckTestNameForNumber checks if a test filename like "test_01.json" matches a requested
 // test number. Zero-alloc: extracts the number after the last "_" without regex.
 func CheckTestNameForNumber(testName string, reqTestNumber int) bool {

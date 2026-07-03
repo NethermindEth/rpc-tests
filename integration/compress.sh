@@ -12,7 +12,7 @@ min_bytes=$(numfmt --from=iec "$normalized") || {
     exit 1
 }
 
-find "$folder" -maxdepth 1 -type f ! -name "*.tar" -print0 | while IFS= read -r -d '' file; do
+find "$folder" -maxdepth 1 -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
     file_size=$(stat -c%s "$file")
     if (( file_size >= min_bytes )); then
         tar -cjf "${file%.*}.tar" -C "$(dirname "$(realpath "$file")")" "$(basename "$file")"

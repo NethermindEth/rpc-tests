@@ -205,7 +205,7 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 					outcome.Metrics.RoundTripTime += m.RoundTripTime
 					outcome.Metrics.UnmarshallingTime += m.UnmarshallingTime
 				}
-				compare.ProcessResponse(retryResult, retryResult1, nil, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, checkFields...)
+				compare.ProcessResponse(retryResult, retryResult1, nil, cfg, outputDirName, daemonFile, expRspFile, diffFile, outcome, ignoreFields, tolerance, checkFields...)
 				if !outcome.Success {
 					enrichErrorDetails(outcome, target, retryReq)
 				}

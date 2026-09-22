@@ -1,0 +1,107 @@
+[
+  {
+    "request": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x0000000000000000000000000000000000001234",
+          "to": "0x0000000000000000000000000000000000005678",
+          "gas": "0x186a0",
+          "input": "0x12345678"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x0000000000000000000000000000000000001234": {
+              "balance": "0x1000000000000000000",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "balance": "0x0",
+              "nonce": "0x0",
+              "code": "0x602a60005260206000f3",
+              "state": {}
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "gas": 21160,
+        "failed": false,
+        "returnValue": "0x000000000000000000000000000000000000000000000000000000000000002a",
+        "structLogs": [
+          {
+            "pc": 0,
+            "op": "PUSH1",
+            "gas": 78936,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": []
+          },
+          {
+            "pc": 2,
+            "op": "PUSH1",
+            "gas": 78933,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x2a"
+            ]
+          },
+          {
+            "pc": 4,
+            "op": "MSTORE",
+            "gas": 78930,
+            "gasCost": 6,
+            "depth": 1,
+            "stack": [
+              "0x2a",
+              "0x0"
+            ]
+          },
+          {
+            "pc": 5,
+            "op": "PUSH1",
+            "gas": 78924,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": []
+          },
+          {
+            "pc": 7,
+            "op": "PUSH1",
+            "gas": 78921,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x20"
+            ]
+          },
+          {
+            "pc": 9,
+            "op": "RETURN",
+            "gas": 78918,
+            "gasCost": 0,
+            "depth": 1,
+            "stack": [
+              "0x20",
+              "0x0"
+            ]
+          }
+        ]
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

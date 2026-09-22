@@ -254,6 +254,38 @@ Assuming you have `erigon` installed beside `rpc-tests`:
 ./../../erigon/.github/workflows/scripts/run_rpc_tests_polygon.sh  # for Polygon Bor mainnet
 ```
 
+## Node data availability and debug tracing
+
+Fixture tags determine the minimum data tier:
+
+- `--pruned` runs fixtures carrying **both** `@full` and `@pruned`.
+- The default full-node mode runs fixtures carrying `@full`.
+- `--archive` also runs untagged historical-state fixtures.
+
+Mainnet `debug_traceCall/test_64.json` through `test_67.json` check rejection of
+`pending`, including the block-number object form, with opcode and call tracers.
+They require no historical state and run on all three node types.
+
+`test_68.json` through `test_79.json` use state overrides and cover opcode output,
+stack/memory/storage options, return data, revert handling, call-tracer logs,
+`noopTracer`, and `4byteTracer`. Run these with `-L`; live comparisons pin `latest`
+to a recent block both nodes have. The committed expected responses use Osaka
+rules. Future forks that change gas costs need separate fixtures or updated
+expectations; a fork mismatch is not an RPC incompatibility.
+
+```bash
+./build/bin/rpc_int -b mainnet --pruned -H <nethermind-host> -p 8545 \
+  -e http://<geth-host>:8545 -A debug_traceCall -c -R report.csv
+./build/bin/rpc_int -b mainnet --pruned -H <nethermind-host> -p 8545 \
+  -e http://<geth-host>:8545 -A debug_traceCall -L -c -R report-latest.csv
+```
+
+Check the executed-test count as well as the exit code: a filtered run can skip
+all fixtures. These cases cover a subset of `debug_traceCall`; they do not
+establish parity for other methods or historical-state behavior. Geth exposes
+tracing under `debug_`, so Nethermind's additional `trace_` namespace requires a
+separate regression run.
+
 ## Legacy Python Runner
 
 <details>

@@ -52,6 +52,7 @@ var testsOnLatest = []string{
 	"mainnet/debug_traceCall/test_94.json",
 	"mainnet/debug_traceCall/test_95.json",
 	"mainnet/debug_traceCall/test_96.json",
+	"mainnet/debug_traceCall/test_97.json",
 	"mainnet/debug_traceCallMany/test_11.json",
 	"mainnet/debug_traceCallMany/test_12.json",
 	"mainnet/eth_baseFee",

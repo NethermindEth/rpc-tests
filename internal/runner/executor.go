@@ -88,6 +88,11 @@ func runCommand(ctx context.Context, cfg *config.Config, cmd *testdata.JsonRpcCo
 		client = internalrpc.NewClient(transportType, "Bearer "+tokenString, cfg.VerboseLevel)
 	}
 
+	if cmd.ReferenceMapping != "" {
+		runMappedTrace(ctx, cfg, cmd, descriptor, outcome, client)
+		return
+	}
+
 	outputAPIFilename, outputDirName, diffFile, daemonFile, expRspFile := compare.OutputFilePaths(cfg.OutputDir, jsonFile)
 
 	checkFields := testdata.CheckFields(filepath.Join(cfg.JSONDir, jsonFile))

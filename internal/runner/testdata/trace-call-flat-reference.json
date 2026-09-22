@@ -1,0 +1,50 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "action": {
+        "callType": "call",
+        "from": "0x0000000000000000000000000000000000001234",
+        "gas": "0x186a0",
+        "input": "0x",
+        "to": "0x0000000000000000000000000000000000005678",
+        "value": "0x0"
+      },
+      "blockHash": null,
+      "blockNumber": 0,
+      "result": {
+        "gasUsed": "0x5c59",
+        "output": "0x"
+      },
+      "subtraces": 1,
+      "traceAddress": [],
+      "transactionHash": null,
+      "transactionPosition": 0,
+      "type": "call"
+    },
+    {
+      "action": {
+        "callType": "call",
+        "from": "0x0000000000000000000000000000000000005678",
+        "gas": "0x7530",
+        "input": "0x",
+        "to": "0x0000000000000000000000000000000000009012",
+        "value": "0x0"
+      },
+      "blockHash": null,
+      "blockNumber": 0,
+      "result": {
+        "gasUsed": "0x12",
+        "output": "0x000000000000000000000000000000000000000000000000000000000000002a"
+      },
+      "subtraces": 0,
+      "traceAddress": [
+        0
+      ],
+      "transactionHash": null,
+      "transactionPosition": 0,
+      "type": "call"
+    }
+  ]
+}

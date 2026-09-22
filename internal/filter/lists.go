@@ -9,6 +9,17 @@ var apiNotCompared = []string{
 // testsOnLatest contains tests that operate on the latest block.
 // These are only run when the -L flag is set.
 var testsOnLatest = []string{
+	"mainnet/trace_call/test_30.json",
+	"mainnet/trace_call/test_31.json",
+	"mainnet/trace_call/test_32.json",
+	"mainnet/trace_call/test_33.json",
+	"mainnet/trace_call/test_34.json",
+	"mainnet/trace_call/test_35.json",
+	"mainnet/trace_call/test_36.json",
+	"mainnet/trace_call/test_37.json",
+	"mainnet/trace_call/test_38.json",
+	"mainnet/trace_call/test_39.json",
+
 	"mainnet/debug_traceBlockByNumber/test_24.json",
 	"mainnet/debug_traceBlockByNumber/test_30.json",
 	"mainnet/debug_traceCall/test_22.json",

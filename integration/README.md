@@ -283,8 +283,11 @@ expectations; a fork mismatch is not an RPC incompatibility.
 Check the executed-test count as well as the exit code: a filtered run can skip
 all fixtures. These cases cover a subset of `debug_traceCall`; they do not
 establish parity for other methods or historical-state behavior. Geth exposes
-tracing under `debug_`, so Nethermind's additional `trace_` namespace requires a
-separate regression run.
+tracing under `debug_`. Nethermind's Parity-style `trace_` API needs native schema
+fixtures and explicit semantic mappings to the corresponding Geth debug tracers;
+the two API families are not interchangeable raw-response comparisons.
+
+The `keccak256PreimageTracer` cases (`debug_traceCall/test_80.json` through `test_96.json`) cover empty and repeated hashes, zero-padded memory, the padding limit, malformed stacks, large offsets, out-of-gas execution, reverted child calls, and independence from opcode-logger options. They also use explicit account overrides and the latest-block pass.
 
 ## Legacy Python Runner
 

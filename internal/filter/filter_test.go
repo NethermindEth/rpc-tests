@@ -1,6 +1,10 @@
 package filter
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -254,5 +258,47 @@ func TestTestsOnLatestList_Count(t *testing.T) {
 	// Verify the list has the expected number of entries from v1
 	if len(testsOnLatest) < 100 {
 		t.Errorf("testsOnLatest has %d entries, expected at least 100", len(testsOnLatest))
+	}
+}
+
+func TestPrunedTraceCallFixturesUseMatchingBlockPass(t *testing.T) {
+	files, err := filepath.Glob("../../integration/mainnet/debug_traceCall/test_*.json")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("cannot discover trace-call fixtures: %v", err)
+	}
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var commands []struct {
+			Tags    []string `json:"tags"`
+			Request struct {
+				Params []any `json:"params"`
+			} `json:"request"`
+		}
+		if err := json.Unmarshal(data, &commands); err != nil {
+			t.Fatal(err)
+		}
+		for _, command := range commands {
+			if !slices.Contains(command.Tags, "@pruned") {
+				continue
+			}
+			t.Run(filepath.Base(file), func(t *testing.T) {
+				if len(command.Request.Params) < 2 {
+					t.Fatal("trace-call fixture has no block argument")
+				}
+				latest := command.Request.Params[1] == "latest"
+				name := "debug_traceCall/" + filepath.Base(file)
+				cfg := defaultCfg()
+				if got := New(cfg).IsSkipped("debug_traceCall", name, 0); got != latest {
+					t.Errorf("ordinary pass skips fixture=%v, want %v", got, latest)
+				}
+				cfg.TestsOnLatestBlock = true
+				if got := New(cfg).APIUnderTest("debug_traceCall", name); got != latest {
+					t.Errorf("latest-block pass selects fixture=%v, want %v", got, latest)
+				}
+			})
+		}
 	}
 }

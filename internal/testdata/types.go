@@ -81,6 +81,7 @@ func (t *JsonRpcTest) HasTag(tag string) bool {
 type JsonRpcCommand struct {
 	Request          jsoniter.RawMessage `json:"request"`
 	ReferenceMapping string              `json:"referenceMapping,omitempty"`
+	ReferenceContext string              `json:"referenceContext,omitempty"`
 	Response         any                 `json:"response"`
 	TestInfo         *JsonRpcTest        `json:"test"`
 }

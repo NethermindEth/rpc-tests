@@ -313,3 +313,35 @@ at one block cannot be cleared by comparing a newer block, because the differenc
 may depend on that block's state or transactions. If state becomes unavailable
 during a long run, retain that failure and start a separate run with a fresh pin.
 No-parameter head methods keep their existing stable-head guard.
+
+### Recent debug transaction and block comparisons
+
+Fixtures with `"referenceContext":"recent-block-v1"` require a live reference
+and `-L`. They select a common nonempty block four blocks behind the suite's pin,
+checking up to eight candidates before issuing the tested RPC. Both clients must
+be synced with fresh heads and agree on the selected block hash, parent, number,
+timestamp and ordered transaction hashes. The block is checked again after the
+comparison; unavailable data or a reorg fails the case.
+
+Only the first RPC argument is resolved: `$transactionHash` selects the first
+transaction for `debug_traceTransaction`, `$blockHash` selects the block for
+`debug_traceBlockByHash`, and `$blockNumber` is used for `debug_traceBlockByNumber`
+and the raw block/header/receipts getters. Other arguments and tracer strings
+are preserved. These are positive comparisons: matching RPC errors, nulls,
+missing transaction results and reordered block traces cannot pass. Complete
+responses are compared without normalization, ignored fields or array sorting.
+
+Every case saves a `*-context.json` artifact containing the original template,
+resolved request, client versions, selection/check requests and responses, both
+tested responses and the outcome, including failures. A selected transaction may
+be a plain transfer; use the recorded block and responses to describe the actual
+coverage rather than assuming nested execution. The first nine fixtures cover
+transaction/block tracing with `noopTracer` and `callTracer` (including logs),
+and raw block/header/receipt bytes. Tracer faults, other options and historical
+state still require separate coverage.
+
+```sh
+./build/bin/rpc_int --pruned -H NETHERMIND_HOST -p 8545 \
+  -e http://GETH_HOST:8545 -A debug_traceTransaction,debug_traceBlockByNumber,debug_traceBlockByHash,debug_getRawBlock,debug_getRawHeader,debug_getRawReceipts \
+  -L -c -f -M 0
+```

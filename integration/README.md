@@ -254,6 +254,41 @@ Assuming you have `erigon` installed beside `rpc-tests`:
 ./../../erigon/.github/workflows/scripts/run_rpc_tests_polygon.sh  # for Polygon Bor mainnet
 ```
 
+## Node data availability and debug tracing
+
+Fixture tags determine the minimum data tier:
+
+- `--pruned` runs fixtures carrying **both** `@full` and `@pruned`.
+- The default full-node mode runs fixtures carrying `@full`.
+- `--archive` also runs untagged historical-state fixtures.
+
+Mainnet `debug_traceCall/test_64.json` through `test_67.json` check rejection of
+`pending`, including the block-number object form, with opcode and call tracers.
+They require no historical state and run on all three node types.
+
+`test_68.json` through `test_79.json` use state overrides and cover opcode output,
+stack/memory/storage options, return data, revert handling, call-tracer logs,
+`noopTracer`, and `4byteTracer`. Run these with `-L`; live comparisons pin `latest`
+to a recent block both nodes have. The committed expected responses use Osaka
+rules. Future forks that change gas costs need separate fixtures or updated
+expectations; a fork mismatch is not an RPC incompatibility.
+
+```bash
+./build/bin/rpc_int -b mainnet --pruned -H <nethermind-host> -p 8545 \
+  -e http://<geth-host>:8545 -A debug_traceCall -c -R report.csv
+./build/bin/rpc_int -b mainnet --pruned -H <nethermind-host> -p 8545 \
+  -e http://<geth-host>:8545 -A debug_traceCall -L -c -R report-latest.csv
+```
+
+Check the executed-test count as well as the exit code: a filtered run can skip
+all fixtures. These cases cover a subset of `debug_traceCall`; they do not
+establish parity for other methods or historical-state behavior. Geth exposes
+tracing under `debug_`. Nethermind's Parity-style `trace_` API needs native schema
+fixtures and explicit semantic mappings to the corresponding Geth debug tracers;
+the two API families are not interchangeable raw-response comparisons.
+
+The `keccak256PreimageTracer` cases (`debug_traceCall/test_80.json` through `test_97.json`) cover empty and repeated hashes, expanded but unwritten memory, zero-padded memory, the padding limit, malformed stacks, large offsets, out-of-gas execution, reverted child calls, and independence from opcode-logger options. They also use explicit account overrides and the latest-block pass.
+
 ## Legacy Python Runner
 
 <details>

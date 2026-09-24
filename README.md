@@ -302,3 +302,8 @@ static/delegate/callcode calls and precompile filtering. Run them with:
 ./build/bin/rpc_int --pruned -H NETHERMIND_HOST -p 8545 \
   -e http://GETH_HOST:8545 -A trace_call -L -c -f -M 0
 ```
+
+
+`debug_traceCall/test_133.json`–`test_136.json` exercise `txIndex` 0 and 1 with callTracer and opcode traces. Their probe reads the real block fee recipient's balance; only the synthetic caller and probe contract are overridden. Run them with `-L` and a live Geth reference so both clients use the same recent block. Recorded responses capture the fixture-generation block and are not timeless balance assertions. Local client regressions separately cover multi-transaction state changes, fee charging, override ordering, invalid quantities, empty/genesis blocks and log offsets. An index1 case needs a nonempty block to exercise prefix replay; inspect the saved block/response evidence when reporting that coverage.
+
+`debug_traceCall/test_137.json`–`test_139.json` compare JavaScript tracer block context with a block-number override, with `txIndex` omitted, zero, and one. The expected block and zero gas price are deterministic; use `-L` to replay the indexed calls against a recent block on pruned nodes.

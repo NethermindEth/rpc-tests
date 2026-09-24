@@ -1,0 +1,118 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x0000000000000000000000000000000000001234",
+          "to": "0x0000000000000000000000000000000000005678",
+          "gas": "0x186a0",
+          "input": "0x"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x0000000000000000000000000000000000001234": {
+              "balance": "0x1000000000000000000",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "code": "0x413160005260206000f3",
+              "nonce": "0x0",
+              "balance": "0x0",
+              "state": {}
+            }
+          },
+          "txIndex": "0x1"
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "gas": 21117,
+        "failed": false,
+        "returnValue": "0x0000000000000000000000000000000000000000000000007232538034f27233",
+        "structLogs": [
+          {
+            "pc": 0,
+            "op": "COINBASE",
+            "gas": 79000,
+            "gasCost": 2,
+            "depth": 1,
+            "stack": []
+          },
+          {
+            "pc": 1,
+            "op": "BALANCE",
+            "gas": 78998,
+            "gasCost": 100,
+            "depth": 1,
+            "stack": [
+              "0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97"
+            ]
+          },
+          {
+            "pc": 2,
+            "op": "PUSH1",
+            "gas": 78898,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x7232538034f27233"
+            ]
+          },
+          {
+            "pc": 4,
+            "op": "MSTORE",
+            "gas": 78895,
+            "gasCost": 6,
+            "depth": 1,
+            "stack": [
+              "0x7232538034f27233",
+              "0x0"
+            ]
+          },
+          {
+            "pc": 5,
+            "op": "PUSH1",
+            "gas": 78889,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": []
+          },
+          {
+            "pc": 7,
+            "op": "PUSH1",
+            "gas": 78886,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x20"
+            ]
+          },
+          {
+            "pc": 9,
+            "op": "RETURN",
+            "gas": 78883,
+            "gasCost": 0,
+            "depth": 1,
+            "stack": [
+              "0x20",
+              "0x0"
+            ]
+          }
+        ]
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

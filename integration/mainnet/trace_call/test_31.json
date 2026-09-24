@@ -1,0 +1,77 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "trace_call",
+      "params": [
+        {
+          "from": "0x0000000000000000000000000000000000001234",
+          "to": "0x0000000000000000000000000000000000005678",
+          "gas": "0x186a0",
+          "input": "0x"
+        },
+        [
+          "trace"
+        ],
+        "latest",
+        {
+          "0x0000000000000000000000000000000000001234": {
+            "balance": "0x1000000000000000000",
+            "nonce": "0x0",
+            "code": "0x",
+            "state": {}
+          },
+          "0x0000000000000000000000000000000000005678": {
+            "balance": "0x0",
+            "nonce": "0x0",
+            "code": "0x602a60005260206000f3",
+            "state": {}
+          },
+          "0x0000000000000000000000000000000000009012": {
+            "balance": "0x0",
+            "nonce": "0x0",
+            "code": "0x00",
+            "state": {}
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "result": {
+        "vmTrace": null,
+        "output": "0x000000000000000000000000000000000000000000000000000000000000002a",
+        "stateDiff": null,
+        "trace": [
+          {
+            "action": {
+              "callType": "call",
+              "from": "0x0000000000000000000000000000000000001234",
+              "gas": "0x13498",
+              "input": "0x",
+              "to": "0x0000000000000000000000000000000000005678",
+              "value": "0x0"
+            },
+            "result": {
+              "gasUsed": "0x12",
+              "output": "0x000000000000000000000000000000000000000000000000000000000000002a"
+            },
+            "subtraces": 0,
+            "traceAddress": [],
+            "type": "call"
+          }
+        ]
+      },
+      "id": 1
+    },
+    "referenceMapping": "trace-call-flat-v1",
+    "test": {
+      "description": "return word; native schema plus mapped Geth call frames"
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

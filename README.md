@@ -266,3 +266,39 @@ pytest
 ```
 
 </details>
+
+### Explicit Parity trace comparisons against Geth
+
+A fixture can opt in to `"referenceMapping": "trace-call-flat-v1"`. This maps
+`trace_call(call, ["trace"], block, overrides)` to Geth's
+`debug_traceCall(call, block, {tracer: "flatCallTracer", tracerConfig:
+{convertParityErrors: true}, stateOverrides: overrides})`. The APIs are not
+identical renames. Live mapped cases require `-L`, use the same pinned block
+number, and verify that both nodes return the same block hash.
+
+Each case must pass **both** checks: its complete native response matches the
+committed fixture, and its projected call frames match Geth. The projection
+compares call actions, successful results, errors, ordered trace addresses and
+subtrace counts. It removes Geth's empty transaction/block metadata and omits
+root `action.gas` / `result.gasUsed`: Parity reports execution gas while Geth's
+root includes intrinsic gas and receipt refund accounting. It also omits results
+on failed frames, which Geth retains for REVERT and Parity omits; root return data
+is still compared through the native `output` envelope. The complete native
+fixture independently checks native gas values, null fields and envelopes.
+
+Version 1 supports call frames only, including CALL, CALLCODE, DELEGATECALL and
+STATICCALL. CREATE, SELFDESTRUCT, VM traces, state diffs and transaction/block
+replay mappings remain outside its coverage. Unsupported mapping versions,
+unpinned comparisons and JSON-RPC errors fail rather than count as parity.
+Mapped cases always retain requests, raw responses, projections, block hashes
+and both assertion outcomes in `*-mapping.json`, including successful cases.
+No error suppression or fixture ignore-fields apply to these strict checks.
+
+The first ten cases are `mainnet/trace_call/test_30.json` through `test_39.json`.
+They cover success, return data, root/child reverts, invalid opcodes, nested calls,
+static/delegate/callcode calls and precompile filtering. Run them with:
+
+```sh
+./build/bin/rpc_int --pruned -H NETHERMIND_HOST -p 8545 \
+  -e http://GETH_HOST:8545 -A trace_call -L -c -f -M 0
+```

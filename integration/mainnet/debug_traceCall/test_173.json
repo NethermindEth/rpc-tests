@@ -1,0 +1,161 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x523a"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x"
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "code": "0x600060006000600060007300000000000000000000000000000000000056786000f1",
+              "balance": "0xde0b6b3a7640000",
+              "nonce": "0x1",
+              "state": {
+                "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            },
+            "0x000000000000000000000000000000000000beef": {
+              "balance": "0x0",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "balance": "0x1",
+              "nonce": "0x1",
+              "code": "0x",
+              "state": {}
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "gas": 21050,
+        "failed": true,
+        "returnValue": "0x",
+        "structLogs": [
+          {
+            "pc": 0,
+            "op": "PUSH1",
+            "gas": 50,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": []
+          },
+          {
+            "pc": 2,
+            "op": "PUSH1",
+            "gas": 47,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x0"
+            ]
+          },
+          {
+            "pc": 4,
+            "op": "PUSH1",
+            "gas": 44,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x0",
+              "0x0"
+            ]
+          },
+          {
+            "pc": 6,
+            "op": "PUSH1",
+            "gas": 41,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x0",
+              "0x0",
+              "0x0"
+            ]
+          },
+          {
+            "pc": 8,
+            "op": "PUSH1",
+            "gas": 38,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0"
+            ]
+          },
+          {
+            "pc": 10,
+            "op": "PUSH20",
+            "gas": 35,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0"
+            ]
+          },
+          {
+            "pc": 31,
+            "op": "PUSH1",
+            "gas": 32,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x5678"
+            ]
+          },
+          {
+            "pc": 33,
+            "op": "CALL",
+            "gas": 29,
+            "gasCost": 100,
+            "depth": 1,
+            "error": "out of gas",
+            "stack": [
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x0",
+              "0x5678",
+              "0x0"
+            ]
+          }
+        ]
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

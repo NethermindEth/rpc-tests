@@ -1,0 +1,94 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x5b0a"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x"
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "code": "0x6001600055",
+              "balance": "0xde0b6b3a7640000",
+              "nonce": "0x1",
+              "state": {
+                "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            },
+            "0x000000000000000000000000000000000000beef": {
+              "balance": "0x0",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "balance": "0x1",
+              "nonce": "0x1",
+              "code": "0x",
+              "state": {}
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "gas": 23306,
+        "failed": true,
+        "returnValue": "0x",
+        "structLogs": [
+          {
+            "pc": 0,
+            "op": "PUSH1",
+            "gas": 2306,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": []
+          },
+          {
+            "pc": 2,
+            "op": "PUSH1",
+            "gas": 2303,
+            "gasCost": 3,
+            "depth": 1,
+            "stack": [
+              "0x1"
+            ]
+          },
+          {
+            "pc": 4,
+            "op": "SSTORE",
+            "gas": 2300,
+            "gasCost": 0,
+            "depth": 1,
+            "error": "out of gas: not enough gas for reentrancy sentry",
+            "stack": [
+              "0x1",
+              "0x0"
+            ],
+            "storage": {
+              "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000001"
+            }
+          }
+        ]
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

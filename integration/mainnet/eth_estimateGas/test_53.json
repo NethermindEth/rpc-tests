@@ -1,0 +1,35 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "gas cap 21000 below intrinsic gas of a call with calldata"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000001",
+          "to": "0x7e57514b00000000000000000000000000000001",
+          "gas": "0x5208",
+          "data": "0xff"
+        },
+        "latest",
+        {
+          "0x7e575e4d00000000000000000000000000000001": {
+            "balance": "0x56bc75e2d63100000"
+          }
+        }
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

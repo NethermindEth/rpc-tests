@@ -1,0 +1,34 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "tip only, sender balance below 21000 * tip"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000002",
+          "to": "0x7e57514b00000000000000000000000000000001",
+          "maxPriorityFeePerGas": "0x3b9aca00"
+        },
+        "latest",
+        {
+          "0x7e575e4d00000000000000000000000000000002": {
+            "balance": "0x1000"
+          }
+        }
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "empty sender with EIP-1559 fees"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000003",
+          "to": "0x7e57c0de00000000000000000000000000000001",
+          "maxFeePerGas": "0x174876e800",
+          "maxPriorityFeePerGas": "0x3b9aca00"
+        },
+        "latest",
+        {
+          "0x7e57c0de00000000000000000000000000000001": {
+            "code": "0x602a60005260206000f3"
+          }
+        }
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

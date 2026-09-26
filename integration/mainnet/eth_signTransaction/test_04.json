@@ -1,0 +1,31 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "fee validation: legacy gasPrice zero"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_signTransaction",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000001",
+          "to": "0x7e57514b00000000000000000000000000000001",
+          "value": "0x1",
+          "gas": "0x5208",
+          "nonce": "0x0",
+          "gasPrice": "0x0"
+        }
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

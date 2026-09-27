@@ -15,6 +15,7 @@
         {
           "from": "0x7e575e4d00000000000000000000000000000001",
           "to": "0x7e57c0de00000000000000000000000000000001",
+          "gas": "0x7a120",
           "maxPriorityFeePerGas": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         },
         "latest",

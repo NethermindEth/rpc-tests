@@ -1,0 +1,76 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x186a0"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x"
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "code": "0x6000600060006000600173000000000000000000000000000000000000beef61fffff200",
+              "balance": "0x0",
+              "nonce": "0x1",
+              "state": {
+                "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            },
+            "0x000000000000000000000000000000000000beef": {
+              "balance": "0x0",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "balance": "0x1",
+              "nonce": "0x1",
+              "code": "0x",
+              "state": {}
+            }
+          },
+          "tracer": "callTracer"
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+        "gas": "0x186a0",
+        "gasUsed": "0x7671",
+        "to": "0x0000000000000000000000000000000000001001",
+        "input": "0x",
+        "calls": [
+          {
+            "from": "0x0000000000000000000000000000000000001001",
+            "gas": "0x108fb",
+            "gasUsed": "0x0",
+            "to": "0x000000000000000000000000000000000000beef",
+            "input": "0x",
+            "error": "insufficient balance for transfer",
+            "value": "0x1",
+            "type": "CALLCODE"
+          }
+        ],
+        "value": "0x0",
+        "type": "CALL"
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

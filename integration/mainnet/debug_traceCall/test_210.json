@@ -1,0 +1,69 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x0000000000000000000000000000000000001234",
+          "to": "0x0000000000000000000000000000000000005678",
+          "gas": "0x186a0",
+          "gasPrice": "0x0"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x0000000000000000000000000000000000001234": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "balance": "0x0",
+              "nonce": "0x1",
+              "code": "0x60016000fd",
+              "state": {}
+            }
+          },
+          "tracer": "{events:[],step:function(log){this.events.push({phase:\"step\",op:log.op.toString(),cost:log.getCost(),error:log.getError() || null});},fault:function(log){this.events.push({phase:\"fault\",op:log.op.toString(),cost:log.getCost(),error:log.getError() || null});},result:function(){return this.events;}}"
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": [
+        {
+          "phase": "step",
+          "op": "PUSH1",
+          "cost": 3,
+          "error": null
+        },
+        {
+          "phase": "step",
+          "op": "PUSH1",
+          "cost": 3,
+          "error": null
+        },
+        {
+          "phase": "step",
+          "op": "REVERT",
+          "cost": 3,
+          "error": null
+        },
+        {
+          "phase": "fault",
+          "op": "REVERT",
+          "cost": 3,
+          "error": "execution reverted"
+        }
+      ]
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

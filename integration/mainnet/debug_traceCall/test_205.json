@@ -1,0 +1,39 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x0000000000000000000000000000000000001234",
+          "gas": "0x186a0",
+          "gasPrice": "0x0",
+          "data": "0x60006000f3"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x0000000000000000000000000000000000001234": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            }
+          },
+          "tracer": "4byteTracer",
+          "tracerConfig": {}
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {}
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

@@ -1,0 +1,59 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x186a0"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x"
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "balance": "0xde0b6b3a7640000",
+              "nonce": "0x1",
+              "code": "0x600060005500",
+              "state": {
+                "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000001"
+              }
+            }
+          },
+          "tracer": "{events:[],capture:function(phase,log,db){if(log.getDepth()!==1||log.getPC()!==4||log.op.toNumber()!==0x55)return;var stack=[];for(var i=0;i<log.stack.length();i++)stack.push(log.stack.peek(i).toString());this.events.push({phase:phase,cost:log.getCost(),refund:log.getRefund(),error:log.getError()||null,stack:stack,storage:parseInt(toHex(db.getState(log.contract.getAddress(),toWord(\"0x00\"))),16)});},step:function(log,db){this.capture(\"step\",log,db);},fault:function(log,db){this.capture(\"fault\",log,db);},result:function(ctx,db){return {events:this.events,storage:parseInt(toHex(db.getState(toAddress(\"0x0000000000000000000000000000000000001001\"),toWord(\"0x00\"))),16)};}}"
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "events": [
+          {
+            "phase": "step",
+            "cost": 5000,
+            "refund": 4800,
+            "error": null,
+            "stack": [
+              "0",
+              "0"
+            ],
+            "storage": 1
+          }
+        ],
+        "storage": 0
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

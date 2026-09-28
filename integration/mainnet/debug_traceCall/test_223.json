@@ -1,0 +1,72 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x186a0",
+          "gasPrice": "0x0"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "code": "0x60006000a000",
+              "balance": "0x1",
+              "nonce": "0x1",
+              "state": {}
+            },
+            "0x000000000000000000000000000000000000beef": {
+              "balance": "0x1",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            }
+          },
+          "blockOverrides": {
+            "feeRecipient": "0x000000000000000000000000000000000000beef",
+            "baseFeePerGas": "0x0"
+          },
+          "tracer": "muxTracer",
+          "tracerConfig": {
+            "{step:function(log){},fault:function(log){},result:function(ctx){return {output:toHex(ctx.output),value:ctx.value.toString(10)};}}": {},
+            "callTracer": {}
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "callTracer": {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "gas": "0x186a0",
+          "gasUsed": "0x5385",
+          "to": "0x0000000000000000000000000000000000001001",
+          "input": "0x",
+          "value": "0x0",
+          "type": "CALL"
+        },
+        "{step:function(log){},fault:function(log){},result:function(ctx){return {output:toHex(ctx.output),value:ctx.value.toString(10)};}}": {
+          "output": "0x",
+          "value": "0"
+        }
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

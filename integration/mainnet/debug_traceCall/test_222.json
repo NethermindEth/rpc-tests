@@ -1,0 +1,90 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x186a0"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x"
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "code": "0x31",
+              "balance": "0xde0b6b3a7640000",
+              "nonce": "0x1",
+              "state": {
+                "0x0000000000000000000000000000000000000000000000000000000000000000": "0x000000000000000000000000000000000000000000000000000000000000002a"
+              }
+            },
+            "0x000000000000000000000000000000000000beef": {
+              "balance": "0x2a",
+              "nonce": "0x1",
+              "code": "0x6000",
+              "state": {}
+            }
+          },
+          "tracer": "{\n  events: [],\n  capture: function(phase, log, db) {\n    var length = log.stack.length();\n    var operands = [];\n    for (var i = 0; i < length; i++) {\n      operands.push(log.stack.peek(i).toString(16));\n    }\n    this.events.push({\n      phase: phase,\n      pc: log.getPC(),\n      op: log.op.toString(),\n      gas: log.getGas(),\n      cost: log.getCost(),\n      error: log.getError() || null,\n      refund: log.getRefund(),\n      stack: {length: length, peek: operands},\n      memory: {length: log.memory.length()},\n      contract: log.contract.getAddress(),\n      dbStateSlot0: db.getState(log.contract.getAddress(), toWord(\"0\")).toString(16)\n    });\n  },\n  step: function(log, db) { this.capture(\"step\", log, db); },\n  fault: function(log, db) { this.capture(\"fault\", log, db); },\n  result: function() { return this.events; }\n}"
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": [
+        {
+          "phase": "step",
+          "pc": 0,
+          "op": "BALANCE",
+          "gas": 79000,
+          "cost": 100,
+          "error": "stack underflow (0 <=> 1)",
+          "refund": 0,
+          "stack": {
+            "length": 0,
+            "peek": []
+          },
+          "memory": {
+            "length": 0
+          },
+          "contract": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 0,
+            "7": 0,
+            "8": 0,
+            "9": 0,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 0,
+            "16": 0,
+            "17": 0,
+            "18": 16,
+            "19": 1
+          },
+          "dbStateSlot0": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,42"
+        }
+      ]
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

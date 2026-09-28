@@ -266,3 +266,82 @@ pytest
 ```
 
 </details>
+
+### Explicit Parity trace comparisons against Geth
+
+A fixture can opt in to `"referenceMapping": "trace-call-flat-v1"`. This maps
+`trace_call(call, ["trace"], block, overrides)` to Geth's
+`debug_traceCall(call, block, {tracer: "flatCallTracer", tracerConfig:
+{convertParityErrors: true}, stateOverrides: overrides})`. The APIs are not
+identical renames. Live mapped cases require `-L`, use the same pinned block
+number, and verify that both nodes return the same block hash.
+
+Each case must pass **both** checks: its complete native response matches the
+committed fixture, and its projected call frames match Geth. The projection
+compares call actions, successful results, errors, ordered trace addresses and
+subtrace counts. It removes Geth's empty transaction/block metadata and omits
+root `action.gas` / `result.gasUsed`: Parity reports execution gas while Geth's
+root includes intrinsic gas and receipt refund accounting. It also omits results
+on failed frames, which Geth retains for REVERT and Parity omits; root return data
+is still compared through the native `output` envelope. The complete native
+fixture independently checks native gas values, null fields and envelopes.
+
+Version 1 supports call frames only, including CALL, CALLCODE, DELEGATECALL and
+STATICCALL. CREATE, SELFDESTRUCT, VM traces, state diffs and transaction/block
+replay mappings remain outside its coverage. Unsupported mapping versions,
+unpinned comparisons and JSON-RPC errors fail rather than count as parity.
+Mapped cases always retain requests, raw responses, projections, block hashes
+and both assertion outcomes in `*-mapping.json`, including successful cases.
+No error suppression or fixture ignore-fields apply to these strict checks.
+
+The first ten cases are `mainnet/trace_call/test_30.json` through `test_39.json`.
+They cover success, return data, root/child reverts, invalid opcodes, nested calls,
+static/delegate/callcode calls and precompile filtering. Run them with:
+
+```sh
+./build/bin/rpc_int --pruned -H NETHERMIND_HOST -p 8545 \
+  -e http://GETH_HOST:8545 -A trace_call -L -c -f -M 0
+```
+
+
+`debug_traceCall/test_133.json`–`test_136.json` exercise `txIndex` 0 and 1 with callTracer and opcode traces. Their probe reads the real block fee recipient's balance; only the synthetic caller and probe contract are overridden. Run them with `-L` and a live Geth reference so both clients use the same recent block. Recorded responses capture the fixture-generation block and are not timeless balance assertions. Local client regressions separately cover multi-transaction state changes, fee charging, override ordering, invalid quantities, empty/genesis blocks and log offsets. An index1 case needs a nonempty block to exercise prefix replay; inspect the saved block/response evidence when reporting that coverage.
+
+`debug_traceCall/test_137.json`–`test_139.json` compare JavaScript tracer block context with a block-number override, with `txIndex` omitted, zero, and one. The expected block and zero gas price are deterministic; use `-L` to replay the indexed calls against a recent block on pruned nodes.
+
+Pinned comparisons retain the original result and failure evidence. A mismatch
+at one block cannot be cleared by comparing a newer block, because the difference
+may depend on that block's state or transactions. If state becomes unavailable
+during a long run, retain that failure and start a separate run with a fresh pin.
+No-parameter head methods keep their existing stable-head guard.
+
+### Recent debug transaction and block comparisons
+
+Fixtures with `"referenceContext":"recent-block-v1"` require a live reference
+and `-L`. They select a common nonempty block four blocks behind the suite's pin,
+checking up to eight candidates before issuing the tested RPC. Both clients must
+be synced with fresh heads and agree on the selected block hash, parent, number,
+timestamp and ordered transaction hashes. The block is checked again after the
+comparison; unavailable data or a reorg fails the case.
+
+Only the first RPC argument is resolved: `$transactionHash` selects the first
+transaction for `debug_traceTransaction`, `$blockHash` selects the block for
+`debug_traceBlockByHash`, and `$blockNumber` is used for `debug_traceBlockByNumber`
+and the raw block/header/receipts getters. Other arguments and tracer strings
+are preserved. These are positive comparisons: matching RPC errors, nulls,
+missing transaction results and reordered block traces cannot pass. Complete
+responses are compared without normalization, ignored fields or array sorting.
+
+Every case saves a `*-context.json` artifact containing the original template,
+resolved request, client versions, selection/check requests and responses, both
+tested responses and the outcome, including failures. A selected transaction may
+be a plain transfer; use the recorded block and responses to describe the actual
+coverage rather than assuming nested execution. The first nine fixtures cover
+transaction/block tracing with `noopTracer` and `callTracer` (including logs),
+and raw block/header/receipt bytes. Tracer faults, other options and historical
+state still require separate coverage.
+
+```sh
+./build/bin/rpc_int --pruned -H NETHERMIND_HOST -p 8545 \
+  -e http://GETH_HOST:8545 -A debug_traceTransaction,debug_traceBlockByNumber,debug_traceBlockByHash,debug_getRawBlock,debug_getRawHeader,debug_getRawReceipts \
+  -L -c -f -M 0
+```

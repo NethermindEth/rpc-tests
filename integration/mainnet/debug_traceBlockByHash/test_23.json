@@ -1,0 +1,26 @@
+[
+  {
+    "test": {
+      "reference": "upstream Geth debug RPC",
+      "description": "Compare debug_traceBlockByHash noopTracer at a verified recent common nonempty block.",
+      "tags": [
+        "@full",
+        "@pruned"
+      ]
+    },
+    "referenceContext": "recent-block-v1",
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceBlockByHash",
+      "params": [
+        "$blockHash",
+        {
+          "tracer": "noopTracer",
+          "tracerConfig": {},
+          "timeout": "30s"
+        }
+      ]
+    }
+  }
+]

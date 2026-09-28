@@ -19,16 +19,10 @@ import (
 	"github.com/erigontech/rpc-tests/internal/testdata"
 )
 
-const (
-	// latestBlockMaxSkew is the largest head difference tolerated between the node under test and
-	// the reference when resolving the block to pin: two independently-synced nodes are routinely
-	// a block or two apart, and that is not a "not synced" condition.
-	latestBlockMaxSkew uint64 = 4
-	// latestRepinRetries bounds how many times a failed pinnable latest test is retried against a
-	// freshly-resolved block, so a long run doesn't fail when the node under test prunes the state
-	// of the originally-pinned block. A genuine discrepancy reproduces at the fresh block and fails.
-	latestRepinRetries = 2
-)
+// latestBlockMaxSkew is the largest head difference tolerated between the node under test and
+// the reference when resolving the block to pin: two independently-synced nodes are routinely
+// a block or two apart, and that is not a "not synced" condition.
+const latestBlockMaxSkew uint64 = 4
 
 // Run executes the full test suite matching v1 runMain behavior.
 func Run(ctx context.Context, cancelCtx context.CancelFunc, cfg *config.Config) (int, error) {

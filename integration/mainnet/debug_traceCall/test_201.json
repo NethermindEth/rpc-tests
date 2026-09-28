@@ -1,0 +1,121 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+          "to": "0x0000000000000000000000000000000000001001",
+          "gas": "0x186a0"
+        },
+        "latest",
+        {
+          "stateOverrides": {
+            "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f": {
+              "balance": "0x21e19e0c9bab2400000",
+              "nonce": "0x0",
+              "code": "0x"
+            },
+            "0x0000000000000000000000000000000000001001": {
+              "code": "0x6000600060006000600073000000000000000000000000000000000000100262011170f15000",
+              "balance": "0x0",
+              "nonce": "0x1",
+              "state": {
+                "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            },
+            "0x000000000000000000000000000000000000beef": {
+              "balance": "0x0",
+              "nonce": "0x0",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000005678": {
+              "balance": "0x1",
+              "nonce": "0x1",
+              "code": "0x",
+              "state": {}
+            },
+            "0x0000000000000000000000000000000000001002": {
+              "balance": "0x0",
+              "nonce": "0x1",
+              "code": "0x60006000a060006000600060007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff73000000000000000000000000000000000000beef61fffff15060006000a0600060006000600060007300000000000000000000000000000000000056786103e8f15000",
+              "state": {}
+            }
+          },
+          "tracer": "callTracer",
+          "tracerConfig": {
+            "withLog": true
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "from": "0x7435ed30a8b4aeb0877cef0c6e8cffe834eb865f",
+        "gas": "0x186a0",
+        "gasUsed": "0xef93",
+        "to": "0x0000000000000000000000000000000000001001",
+        "input": "0x",
+        "calls": [
+          {
+            "from": "0x0000000000000000000000000000000000001001",
+            "gas": "0x11170",
+            "gasUsed": "0x934c",
+            "to": "0x0000000000000000000000000000000000001002",
+            "input": "0x",
+            "calls": [
+              {
+                "from": "0x0000000000000000000000000000000000001002",
+                "gas": "0x87df",
+                "gasUsed": "0x0",
+                "to": "0x000000000000000000000000000000000000beef",
+                "input": "0x",
+                "error": "insufficient balance for transfer",
+                "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "type": "CALL"
+              },
+              {
+                "from": "0x0000000000000000000000000000000000001002",
+                "gas": "0x3e8",
+                "gasUsed": "0x0",
+                "to": "0x0000000000000000000000000000000000005678",
+                "input": "0x",
+                "value": "0x0",
+                "type": "CALL"
+              }
+            ],
+            "logs": [
+              {
+                "address": "0x0000000000000000000000000000000000001002",
+                "topics": [],
+                "data": "0x",
+                "index": "0x0",
+                "position": "0x0"
+              },
+              {
+                "address": "0x0000000000000000000000000000000000001002",
+                "topics": [],
+                "data": "0x",
+                "index": "0x1",
+                "position": "0x1"
+              }
+            ],
+            "value": "0x0",
+            "type": "CALL"
+          }
+        ],
+        "value": "0x0",
+        "type": "CALL"
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

@@ -79,9 +79,11 @@ func (t *JsonRpcTest) HasTag(tag string) bool {
 
 // JsonRpcCommand represents a single JSON-RPC command in a test fixture.
 type JsonRpcCommand struct {
-	Request  jsoniter.RawMessage `json:"request"`
-	Response any                 `json:"response"`
-	TestInfo *JsonRpcTest        `json:"test"`
+	Request          jsoniter.RawMessage `json:"request"`
+	ReferenceMapping string              `json:"referenceMapping,omitempty"`
+	ReferenceContext string              `json:"referenceContext,omitempty"`
+	Response         any                 `json:"response"`
+	TestInfo         *JsonRpcTest        `json:"test"`
 }
 
 // DiscoveryResult holds the results of test discovery.

@@ -132,59 +132,76 @@ func runMappedTrace(ctx context.Context, cfg *config.Config, cmd *testdata.JsonR
 		return
 	}
 	target := cfg.GetTarget(cfg.DaemonUnderTest, descriptor.Name)
-	var actual any
-	metrics, err := client.Call(ctx, target, request, &actual)
-	outcome.Metrics.RoundTripTime += metrics.RoundTripTime
-	outcome.Metrics.UnmarshallingTime += metrics.UnmarshallingTime
-	if err != nil {
-		outcome.Error = err
-		enrichErrorDetails(outcome, target, request)
-		return
-	}
-	nativeMatches := reflect.DeepEqual(actual, cmd.Response)
-	actualProjection, projectionErr := projectTraceCall(actual, false)
-	evidence := map[string]any{"mapping": cmd.ReferenceMapping, "nativeRequest": json.RawMessage(request), "nativeResponse": actual, "nativeExpected": cmd.Response, "nativeSchemaMatched": nativeMatches, "nativeProjection": actualProjection}
-	mappedMatches := !cfg.VerifyWithDaemon
-	var referenceProjection any
-	if cfg.VerifyWithDaemon {
-		refClient := client
-		if len(cfg.ExternalProviderHeaders) > 0 {
-			refClient = internalrpc.NewClientWithHeaders(descriptor.TransportType, "", cfg.VerboseLevel, cfg.ExternalProviderHeaders)
-		}
-		refTarget := cfg.GetTarget(cfg.DaemonAsReference, descriptor.Name)
-		var reference any
+	evidence := map[string]any{"mapping": cmd.ReferenceMapping, "nativeRequest": json.RawMessage(request), "nativeExpected": cmd.Response}
+	var refClient *internalrpc.Client
+	var refTarget string
+	readCommonBlock := func(stage string) (string, error) {
 		hashes := make([]string, 0, 2)
 		blockRequest, _ := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": 1, "method": "eth_getBlockByNumber", "params": []any{fmt.Sprintf("0x%x", cfg.PinnedLatestBlock), false}})
 		for _, endpoint := range []struct {
 			client       *internalrpc.Client
 			target, name string
-		}{{client, target, "nativeBlock"}, {refClient, refTarget, "referenceBlock"}} {
+		}{{client, target, "NativeBlock"}, {refClient, refTarget, "ReferenceBlock"}} {
 			var block map[string]any
-			m, e := endpoint.client.Call(ctx, endpoint.target, blockRequest, &block)
+			m, callErr := endpoint.client.Call(ctx, endpoint.target, blockRequest, &block)
 			outcome.Metrics.RoundTripTime += m.RoundTripTime
 			outcome.Metrics.UnmarshallingTime += m.UnmarshallingTime
-			evidence[endpoint.name] = block
-			if e != nil {
-				err = e
-				break
+			evidence[stage+endpoint.name] = block
+			if callErr != nil {
+				return "", callErr
 			}
 			value, _ := block["result"].(map[string]any)
 			hash, _ := value["hash"].(string)
 			if hash == "" {
-				err = fmt.Errorf("cannot verify common block hash")
-				break
+				return "", fmt.Errorf("cannot verify common block hash")
 			}
 			hashes = append(hashes, hash)
 		}
-		if err == nil && (len(hashes) != 2 || hashes[0] != hashes[1]) {
-			err = fmt.Errorf("reference and native block hashes differ")
+		if hashes[0] != hashes[1] {
+			return "", fmt.Errorf("reference and native block hashes differ")
 		}
-		evidence["commonBlockVerified"] = err == nil
+		return hashes[0], nil
+	}
+	var beforeHash string
+	if cfg.VerifyWithDaemon {
+		refClient = client
+		if len(cfg.ExternalProviderHeaders) > 0 {
+			refClient = internalrpc.NewClientWithHeaders(descriptor.TransportType, "", cfg.VerboseLevel, cfg.ExternalProviderHeaders)
+		}
+		refTarget = cfg.GetTarget(cfg.DaemonAsReference, descriptor.Name)
+		beforeHash, err = readCommonBlock("before")
+	}
+	var actual any
+	if err == nil {
+		var metrics internalrpc.Metrics
+		metrics, err = client.Call(ctx, target, request, &actual)
+		outcome.Metrics.RoundTripTime += metrics.RoundTripTime
+		outcome.Metrics.UnmarshallingTime += metrics.UnmarshallingTime
+		if err != nil {
+			outcome.Error = err
+			enrichErrorDetails(outcome, target, request)
+			return
+		}
+	}
+	nativeMatches := err == nil && reflect.DeepEqual(actual, cmd.Response)
+	var actualProjection any
+	var projectionErr error
+	if err == nil {
+		actualProjection, projectionErr = projectTraceCall(actual, false)
+	}
+	evidence["nativeResponse"] = actual
+	evidence["nativeSchemaMatched"] = nativeMatches
+	evidence["nativeProjection"] = actualProjection
+	mappedMatches := !cfg.VerifyWithDaemon
+	var referenceProjection any
+	if cfg.VerifyWithDaemon && err == nil {
+		var reference any
 		m, callErr := refClient.Call(ctx, refTarget, referenceRequest, &reference)
 		outcome.Metrics.RoundTripTime += m.RoundTripTime
 		outcome.Metrics.UnmarshallingTime += m.UnmarshallingTime
 		evidence["referenceRequest"] = json.RawMessage(referenceRequest)
 		evidence["referenceResponse"] = reference
+		afterHash, blockErr := readCommonBlock("after")
 		if callErr != nil {
 			err = callErr
 		} else {
@@ -193,10 +210,20 @@ func runMappedTrace(ctx context.Context, cfg *config.Config, cmd *testdata.JsonR
 			if referenceErr != nil {
 				err = referenceErr
 			}
-			mappedMatches = err == nil && projectionErr == nil && reflect.DeepEqual(actualProjection, referenceProjection)
 		}
+		blockVerified := blockErr == nil && beforeHash == afterHash
+		if err == nil && blockErr != nil {
+			err = blockErr
+		}
+		if err == nil && beforeHash != afterHash {
+			err = fmt.Errorf("common block hash changed during comparison")
+		}
+		evidence["commonBlockVerified"] = blockVerified
+		mappedMatches = err == nil && projectionErr == nil && reflect.DeepEqual(actualProjection, referenceProjection)
 		evidence["referenceProjection"] = referenceProjection
 		evidence["mappedReferenceMatched"] = mappedMatches
+	} else if cfg.VerifyWithDaemon {
+		evidence["commonBlockVerified"] = false
 	}
 	if projectionErr != nil {
 		err = projectionErr

@@ -65,12 +65,20 @@ func parseRecentBlock(value any) (recentBlock, error) {
 			return block, fmt.Errorf("invalid transaction hash")
 		}
 	}
-	stamp, err := strconv.ParseUint(strings.TrimPrefix(block.Timestamp, "0x"), 16, 64)
-	now := time.Now().Unix()
-	if err != nil || stamp > uint64(now+15) || stamp < uint64(now-300) {
-		return block, fmt.Errorf("block timestamp is stale or invalid")
+	_, err = strconv.ParseUint(strings.TrimPrefix(block.Timestamp, "0x"), 16, 64)
+	if err != nil {
+		return block, fmt.Errorf("block timestamp is invalid")
 	}
 	return block, nil
+}
+
+func validateRecentHead(block recentBlock) error {
+	stamp, _ := strconv.ParseUint(strings.TrimPrefix(block.Timestamp, "0x"), 16, 64)
+	now := time.Now().Unix()
+	if stamp > uint64(now+15) || stamp < uint64(now-300) {
+		return fmt.Errorf("block timestamp is stale or invalid")
+	}
+	return nil
 }
 
 func validateRecentResult(method string, result any, block recentBlock) error {
@@ -210,7 +218,16 @@ func runRecentBlockTest(ctx context.Context, cfg *config.Config, cmd *testdata.J
 		}
 		head, err := readBlock(side, "latest")
 		number, parseErr := strconv.ParseUint(strings.TrimPrefix(head.Number, "0x"), 16, 64)
-		if err != nil || parseErr != nil || number < cfg.PinnedLatestBlock {
+		if err == nil {
+			err = parseErr
+		}
+		if err == nil {
+			err = validateRecentHead(head)
+		}
+		if err == nil && number < cfg.PinnedLatestBlock {
+			err = fmt.Errorf("head %s is behind pin 0x%x", head.Number, cfg.PinnedLatestBlock)
+		}
+		if err != nil {
 			fail(fmt.Errorf("client has no fresh head at the requested pin: %v", err))
 			return
 		}

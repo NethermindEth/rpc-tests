@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/erigontech/rpc-tests/internal/config"
@@ -37,7 +38,7 @@ func traceMappingFixture(t *testing.T) (*testdata.JsonRpcCommand, map[string]any
 }
 
 func TestMappedTraceNativeSchemaAndReference(t *testing.T) {
-	for _, name := range []string{"match", "native schema mismatch despite matching projection", "nested gas mismatch", "reference error", "both return errors", "empty reference", "wrong reference context", "unknown frame type", "unknown mapping", "missing pin", "different block hash", "regression only"} {
+	for _, name := range []string{"match", "native schema mismatch despite matching projection", "nested gas mismatch", "reference error", "both return errors", "empty reference", "wrong reference context", "unknown frame type", "unknown mapping", "missing pin", "different block hash", "reorg after native trace", "reorg after reference trace", "regression only"} {
 		t.Run(name, func(t *testing.T) {
 			command, reference := traceMappingFixture(t)
 			raw, _ := json.Marshal(command.Response)
@@ -76,6 +77,7 @@ func TestMappedTraceNativeSchemaAndReference(t *testing.T) {
 			}
 			var nativeRequest, referenceRequest map[string]any
 			var requestsLock sync.Mutex
+			var nativeTraced, referenceTraced atomic.Bool
 			native := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				var request map[string]any
 				if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -83,9 +85,14 @@ func TestMappedTraceNativeSchemaAndReference(t *testing.T) {
 					return
 				}
 				if request["method"] == "eth_getBlockByNumber" {
-					json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": map[string]any{"hash": "0x1234"}})
+					hash := "0x1234"
+					if (name == "reorg after native trace" && nativeTraced.Load()) || (name == "reorg after reference trace" && referenceTraced.Load()) {
+						hash = "0x5678"
+					}
+					json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": map[string]any{"hash": hash}})
 					return
 				}
+				nativeTraced.Store(true)
 				requestsLock.Lock()
 				nativeRequest = request
 				requestsLock.Unlock()
@@ -102,10 +109,13 @@ func TestMappedTraceNativeSchemaAndReference(t *testing.T) {
 					hash := "0x1234"
 					if name == "different block hash" {
 						hash = "0x5678"
+					} else if (name == "reorg after native trace" && nativeTraced.Load()) || (name == "reorg after reference trace" && referenceTraced.Load()) {
+						hash = "0x5678"
 					}
 					json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": map[string]any{"hash": hash}})
 					return
 				}
+				referenceTraced.Store(true)
 				requestsLock.Lock()
 				referenceRequest = request
 				requestsLock.Unlock()
@@ -153,6 +163,13 @@ func TestMappedTraceNativeSchemaAndReference(t *testing.T) {
 				}
 				if name == "native schema mismatch despite matching projection" && (evidence["nativeSchemaMatched"] != false || evidence["mappedReferenceMatched"] != true) {
 					t.Fatalf("schema guard not independent: %s", b)
+				}
+				if strings.HasPrefix(name, "reorg after") {
+					requestsLock.Lock()
+					defer requestsLock.Unlock()
+					if evidence["commonBlockVerified"] != false || nativeRequest == nil || referenceRequest == nil || nativeRequest["params"].([]any)[2] != "0x64" || referenceRequest["params"].([]any)[1] != "0x64" {
+						t.Fatalf("reorg was not rejected around two traces at the original pin: %s", b)
+					}
 				}
 			}
 		})

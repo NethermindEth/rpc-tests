@@ -25,7 +25,7 @@ import (
 
 func TestRecentBlockContext(t *testing.T) {
 	methods := []string{"debug_traceTransaction", "debug_traceBlockByNumber", "debug_traceBlockByHash", "debug_getRawBlock", "debug_getRawHeader", "debug_getRawReceipts"}
-	cases := []string{"match", "different responses", "both RPC errors", "both null", "wrong response id", "HTTP error", "different blocks", "different transactions", "reorg", "empty block", "all empty", "stale head", "lagging head", "syncing", "unknown context", "missing pin", "no reference", "not latest", "mapping conflict", "wrong selector", "unsupported method", "cancelled"}
+	cases := []string{"match", "older retained pin", "different responses", "both RPC errors", "both null", "wrong response id", "HTTP error", "different blocks", "different transactions", "reorg", "empty block", "all empty", "stale head", "lagging head", "syncing", "unknown context", "missing pin", "no reference", "not latest", "mapping conflict", "wrong selector", "unsupported method", "cancelled"}
 	for _, method := range methods {
 		for _, name := range cases {
 			t.Run(method+"/"+name, func(t *testing.T) {
@@ -57,6 +57,7 @@ func TestRecentBlockContext(t *testing.T) {
 							response["result"] = name == "syncing"
 						case "eth_getBlockByNumber":
 							number := request.Params[0].(string)
+							latest := number == "latest"
 							if number == "latest" {
 								number = "0x100"
 								if name == "lagging head" {
@@ -77,6 +78,8 @@ func TestRecentBlockContext(t *testing.T) {
 							}
 							stamp := timestamp
 							if name == "stale head" {
+								stamp -= 600
+							} else if name == "older retained pin" && !latest {
 								stamp -= 600
 							}
 							response["result"] = recentBlock{Number: number, Hash: hash, ParentHash: fmt.Sprintf("0x%064x", n-1), Timestamp: fmt.Sprintf("0x%x", stamp), Transactions: transactions}
@@ -156,7 +159,7 @@ func TestRecentBlockContext(t *testing.T) {
 				}
 				outcome := testdata.TestOutcome{}
 				runCommand(ctx, cfg, command, &testdata.TestDescriptor{Name: method + "/test_recent.json", TransportType: config.TransportHTTP}, &outcome, internalrpc.NewClient(config.TransportHTTP, "", 0))
-				want := name == "match" || name == "empty block"
+				want := name == "match" || name == "older retained pin" || name == "empty block"
 				if outcome.Success != want || (!want && outcome.Error == nil) {
 					t.Fatalf("success=%v want=%v err=%v", outcome.Success, want, outcome.Error)
 				}

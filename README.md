@@ -324,10 +324,13 @@ timestamp and ordered transaction hashes. The block is checked again after the
 comparison; unavailable data or a reorg fails the case.
 
 Only the first RPC argument is resolved: `$transactionHash` selects the first
-transaction for `debug_traceTransaction`, `$blockHash` selects the block for
-`debug_traceBlockByHash`, and `$blockNumber` is used for `debug_traceBlockByNumber`
-and the raw block/header/receipts getters. Other arguments and tracer strings
-are preserved. These are positive comparisons: matching RPC errors, nulls,
+transaction for `debug_traceTransaction` and `debug_getRawTransaction`, `$blockHash`
+selects the block for `debug_traceBlockByHash` and `debug_intermediateRoots`, and
+`$blockNumber` is used for `debug_traceBlockByNumber`. The raw block/header/receipts
+getters accept either `$blockNumber` or `$blockHash`. `$rawBlock` passes the block's
+RLP to `debug_traceBlock`; it is read with `debug_getRawBlock` from both clients,
+and the case fails unless they return identical bytes. Other arguments and tracer
+strings are preserved. These are positive comparisons: matching RPC errors, nulls,
 missing transaction results and reordered block traces cannot pass. Complete
 responses are compared without normalization, ignored fields or array sorting.
 
@@ -340,8 +343,20 @@ transaction/block tracing with `noopTracer` and `callTracer` (including logs),
 and raw block/header/receipt bytes. Tracer faults, other options and historical
 state still require separate coverage.
 
+`debug_traceTransaction/test_158.json`–`test_168.json` add `prestateTracer`
+(default, diff mode, code/storage suppression), `4byteTracer`, `callTracer` with
+`onlyTopCall`, `keccak256PreimageTracer`, `flatCallTracer`, `muxTracer`, a
+JavaScript tracer, and the opcode logger with default and memory/return-data
+options under a step `limit`. `debug_traceBlockByHash/test_25.json`–`test_29.json`
+and `debug_traceBlockByNumber/test_54.json` run the prestate, 4byte, flat and mux
+tracers over every transaction of the block, so they also exercise whatever
+transaction types it contains. `debug_traceBlock/test_01.json`–`test_02.json`,
+`debug_intermediateRoots/test_01.json`, `debug_getRawTransaction/test_07.json`,
+`debug_getRawBlock/test_08.json`, `debug_getRawHeader/test_08.json` and
+`debug_getRawReceipts/test_09.json` cover the remaining methods and hash selection.
+
 ```sh
 ./build/bin/rpc_int --pruned -H NETHERMIND_HOST -p 8545 \
-  -e http://GETH_HOST:8545 -A debug_traceTransaction,debug_traceBlockByNumber,debug_traceBlockByHash,debug_getRawBlock,debug_getRawHeader,debug_getRawReceipts \
+  -e http://GETH_HOST:8545 -A debug_traceTransaction,debug_traceBlockByNumber,debug_traceBlockByHash,debug_traceBlock,debug_intermediateRoots,debug_getRawTransaction,debug_getRawBlock,debug_getRawHeader,debug_getRawReceipts \
   -L -c -f -M 0
 ```

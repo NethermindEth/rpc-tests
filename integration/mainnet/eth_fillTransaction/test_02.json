@@ -1,0 +1,30 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "fee validation: maxFeePerGas zero with a tip"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_fillTransaction",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000001",
+          "to": "0x7e57514b00000000000000000000000000000001",
+          "value": "0x1",
+          "maxFeePerGas": "0x0",
+          "maxPriorityFeePerGas": "0x1"
+        }
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

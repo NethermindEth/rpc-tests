@@ -134,7 +134,6 @@ var testsOnLatest = []string{
 	"mainnet/eth_createAccessList/test_22.json",
 	"mainnet/eth_createAccessList/test_23.json",
 	"mainnet/eth_createAccessList/test_24.json",
-	"mainnet/eth_createAccessList/test_25.json",
 	"mainnet/eth_createAccessList/test_26.json",
 	"mainnet/eth_createAccessList/test_27.json",
 	"mainnet/eth_createAccessList/test_28.json",

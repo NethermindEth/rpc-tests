@@ -1,0 +1,39 @@
+[
+  {
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x0000000000000000000000000000000000000000",
+          "to": "0x000000000000000000000000000000000000dead",
+          "gas": "0x186a0",
+          "gasPrice": "0x1",
+          "maxFeePerGas": "0x2"
+        },
+        "latest",
+        {
+          "timeout": "2s",
+          "stateOverrides": {
+            "0x000000000000000000000000000000000000dead": {
+              "code": "0x00"
+            }
+          }
+        }
+      ]
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "error": {
+        "code": -32000,
+        "message": "both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified"
+      }
+    },
+    "tags": [
+      "@full",
+      "@pruned"
+    ]
+  }
+]

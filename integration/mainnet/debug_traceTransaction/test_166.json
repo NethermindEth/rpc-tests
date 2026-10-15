@@ -1,0 +1,25 @@
+[
+  {
+    "test": {
+      "reference": "upstream Geth debug RPC",
+      "description": "Compare debug_traceTransaction a JavaScript tracer returning call context and opcode counts at a verified recent common nonempty block.",
+      "tags": [
+        "@full",
+        "@pruned"
+      ]
+    },
+    "referenceContext": "recent-block-v1",
+    "request": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "debug_traceTransaction",
+      "params": [
+        "$transactionHash",
+        {
+          "tracer": "{counts: {}, step: function(log) { var op = log.op.toString(); this.counts[op] = (this.counts[op] || 0) + 1; }, fault: function(log, db) {}, result: function(ctx, db) { return {type: ctx.type, from: toHex(ctx.from), to: toHex(ctx.to), gasUsed: ctx.gasUsed, output: toHex(ctx.output), counts: this.counts}; }}",
+          "timeout": "30s"
+        }
+      ]
+    }
+  }
+]

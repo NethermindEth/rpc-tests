@@ -24,11 +24,25 @@ import (
 )
 
 func TestRecentBlockContext(t *testing.T) {
-	methods := []string{"debug_traceTransaction", "debug_traceBlockByNumber", "debug_traceBlockByHash", "debug_getRawBlock", "debug_getRawHeader", "debug_getRawReceipts"}
-	cases := []string{"match", "older retained pin", "different responses", "both RPC errors", "both null", "wrong response id", "HTTP error", "different blocks", "different transactions", "reorg", "empty block", "all empty", "stale head", "lagging head", "syncing", "unknown context", "missing pin", "no reference", "not latest", "mapping conflict", "wrong selector", "unsupported method", "cancelled"}
-	for _, method := range methods {
+	selectors := []struct{ method, selector string }{
+		{"debug_traceTransaction", "$transactionHash"},
+		{"debug_getRawTransaction", "$transactionHash"},
+		{"debug_traceBlockByNumber", "$blockNumber"},
+		{"debug_traceBlockByHash", "$blockHash"},
+		{"debug_intermediateRoots", "$blockHash"},
+		{"debug_traceBlock", "$rawBlock"},
+		{"debug_getRawBlock", "$blockNumber"},
+		{"debug_getRawBlock", "$blockHash"},
+		{"debug_getRawHeader", "$blockNumber"},
+		{"debug_getRawHeader", "$blockHash"},
+		{"debug_getRawReceipts", "$blockNumber"},
+		{"debug_getRawReceipts", "$blockHash"},
+	}
+	cases := []string{"match", "older retained pin", "different responses", "both RPC errors", "both null", "wrong response id", "HTTP error", "different blocks", "different transactions", "reorg", "empty block", "all empty", "stale head", "lagging head", "syncing", "unknown context", "missing pin", "no reference", "not latest", "mapping conflict", "wrong selector", "unsupported method", "different raw blocks", "cancelled"}
+	for _, selected := range selectors {
+		method := selected.method
 		for _, name := range cases {
-			t.Run(method+"/"+name, func(t *testing.T) {
+			t.Run(method+"/"+selected.selector+"/"+name, func(t *testing.T) {
 				t.Parallel()
 				var traceCalls atomic.Int32
 				var requests [2]atomic.Value
@@ -83,14 +97,25 @@ func TestRecentBlockContext(t *testing.T) {
 								stamp -= 600
 							}
 							response["result"] = recentBlock{Number: number, Hash: hash, ParentHash: fmt.Sprintf("0x%064x", n-1), Timestamp: fmt.Sprintf("0x%x", stamp), Transactions: transactions}
+						case "debug_getRawBlock":
+							if method == "debug_traceBlock" {
+								response["result"] = "0xabcd"
+								if name == "different raw blocks" && side == 1 {
+									response["result"] = "0xabce"
+								}
+								break
+							}
+							fallthrough
 						default:
 							traceCalls.Add(1)
 							requests[side].Store(append([]byte(nil), raw...))
 							result := any(map[string]any{"type": "CALL", "gasUsed": "0x1"})
 							switch method {
-							case "debug_traceBlockByNumber", "debug_traceBlockByHash":
-								result = []any{map[string]any{"txHash": txs[0], "result": result}, map[string]any{"txHash": txs[1], "result": result}}
-							case "debug_getRawBlock", "debug_getRawHeader":
+							case "debug_traceBlockByNumber", "debug_traceBlockByHash", "debug_traceBlock":
+								result = []any{map[string]any{"txHash": txs[0], "result": result}, map[string]any{"txHash": txs[1], "result": []any{}}}
+							case "debug_intermediateRoots":
+								result = []any{fmt.Sprintf("0x%064x", 7), fmt.Sprintf("0x%064x", 8)}
+							case "debug_getRawBlock", "debug_getRawHeader", "debug_getRawTransaction":
 								result = "0x1234"
 							case "debug_getRawReceipts":
 								result = []any{"0x1234", "0x5678"}
@@ -129,12 +154,7 @@ func TestRecentBlockContext(t *testing.T) {
 				host, port, _ := net.SplitHostPort(strings.TrimPrefix(native.URL, "http://"))
 				cfg.DaemonOnHost = host
 				cfg.ServerPort, _ = strconv.Atoi(port)
-				selector := "$blockNumber"
-				if method == "debug_traceTransaction" {
-					selector = "$transactionHash"
-				} else if method == "debug_traceBlockByHash" {
-					selector = "$blockHash"
-				}
+				selector := selected.selector
 				if name == "wrong selector" {
 					selector = "latest"
 				}
@@ -159,7 +179,7 @@ func TestRecentBlockContext(t *testing.T) {
 				}
 				outcome := testdata.TestOutcome{}
 				runCommand(ctx, cfg, command, &testdata.TestDescriptor{Name: method + "/test_recent.json", TransportType: config.TransportHTTP}, &outcome, internalrpc.NewClient(config.TransportHTTP, "", 0))
-				want := name == "match" || name == "older retained pin" || name == "empty block"
+				want := name == "match" || name == "older retained pin" || name == "empty block" || (name == "different raw blocks" && method != "debug_traceBlock")
 				if outcome.Success != want || (!want && outcome.Error == nil) {
 					t.Fatalf("success=%v want=%v err=%v", outcome.Success, want, outcome.Error)
 				}
@@ -188,11 +208,14 @@ func TestRecentBlockContext(t *testing.T) {
 							number = "0xfb"
 						}
 						expected := number
-						if method == "debug_traceTransaction" {
+						switch selector {
+						case "$transactionHash":
 							expected = txs[0]
-						} else if method == "debug_traceBlockByHash" {
+						case "$blockHash":
 							n, _ := strconv.ParseUint(number[2:], 16, 64)
 							expected = fmt.Sprintf("0x%064x", n)
+						case "$rawBlock":
+							expected = "0xabcd"
 						}
 						if args[0] != expected || args[1].(map[string]any)["tracerConfig"].(map[string]any)["text"] != "$blockNumber" {
 							t.Fatalf("wrong selector or unrelated option changed: %s", sent)
@@ -219,6 +242,20 @@ func TestRecentBlockResultValidation(t *testing.T) {
 	}
 	if validateRecentResult("debug_getRawReceipts", []any{"0x1234", "0x"}, block) == nil {
 		t.Fatal("accepted empty receipt")
+	}
+	root := fmt.Sprintf("0x%064x", 1)
+	for _, result := range []any{[]any{root}, []any{root, "0x1234"}, []any{root, nil}} {
+		if validateRecentResult("debug_intermediateRoots", result, block) == nil {
+			t.Fatalf("accepted incomplete or malformed intermediate roots: %v", result)
+		}
+	}
+	for _, result := range []any{nil, "0x", 1} {
+		if validateRecentResult("debug_traceTransaction", result, block) == nil {
+			t.Fatalf("accepted a non-tracer result: %v", result)
+		}
+	}
+	if validateRecentResult("debug_traceBlock", []any{map[string]any{"txHash": "first", "result": []any{}}, map[string]any{"txHash": "second", "result": nil}}, block) == nil {
+		t.Fatal("accepted a block trace without a tracer result")
 	}
 }
 
@@ -255,7 +292,7 @@ func TestRecentBlockFixturesSelectedOnlyOnLatestPass(t *testing.T) {
 			}
 		}
 	}
-	if count != 9 {
-		t.Fatalf("selected %d recent-block fixtures, want 9", count)
+	if count != 33 {
+		t.Fatalf("selected %d recent-block fixtures, want 33", count)
 	}
 }

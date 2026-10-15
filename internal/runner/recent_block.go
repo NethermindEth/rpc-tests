@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +19,19 @@ import (
 )
 
 const recentBlockV1 = "recent-block-v1"
+
+// recentSelectors lists the placeholders each method accepts as its first argument.
+var recentSelectors = map[string][]string{
+	"debug_traceTransaction":   {"$transactionHash"},
+	"debug_getRawTransaction":  {"$transactionHash"},
+	"debug_traceBlockByNumber": {"$blockNumber"},
+	"debug_traceBlockByHash":   {"$blockHash"},
+	"debug_intermediateRoots":  {"$blockHash"},
+	"debug_traceBlock":         {"$rawBlock"},
+	"debug_getRawBlock":        {"$blockNumber", "$blockHash"},
+	"debug_getRawHeader":       {"$blockNumber", "$blockHash"},
+	"debug_getRawReceipts":     {"$blockNumber", "$blockHash"},
+}
 
 type recentBlock struct {
 	Number       string   `json:"number"`
@@ -81,13 +95,22 @@ func validateRecentHead(block recentBlock) error {
 	return nil
 }
 
+// tracerResult accepts object results and the array results of tracers such as flatCallTracer.
+func tracerResult(value any) bool {
+	switch value.(type) {
+	case map[string]any, []any:
+		return true
+	}
+	return false
+}
+
 func validateRecentResult(method string, result any, block recentBlock) error {
 	switch method {
 	case "debug_traceTransaction":
-		if _, ok := result.(map[string]any); ok {
+		if tracerResult(result) {
 			return nil
 		}
-	case "debug_traceBlockByNumber", "debug_traceBlockByHash":
+	case "debug_traceBlockByNumber", "debug_traceBlockByHash", "debug_traceBlock":
 		traces, ok := result.([]any)
 		if ok && len(traces) == len(block.Transactions) {
 			for i, trace := range traces {
@@ -95,13 +118,23 @@ func validateRecentResult(method string, result any, block recentBlock) error {
 				if !ok || entry["txHash"] != block.Transactions[i] || entry["error"] != nil {
 					return fmt.Errorf("block trace %d has an error or wrong transaction hash/order", i)
 				}
-				if _, ok := entry["result"].(map[string]any); !ok {
+				if !tracerResult(entry["result"]) {
 					return fmt.Errorf("block trace %d has no tracer result", i)
 				}
 			}
 			return nil
 		}
-	case "debug_getRawBlock", "debug_getRawHeader":
+	case "debug_intermediateRoots":
+		roots, ok := result.([]any)
+		if ok && len(roots) == len(block.Transactions) {
+			for i, root := range roots {
+				if !hexBytes(root, 32) {
+					return fmt.Errorf("intermediate root %d is not a 32-byte hash", i)
+				}
+			}
+			return nil
+		}
+	case "debug_getRawBlock", "debug_getRawHeader", "debug_getRawTransaction":
 		if hexBytes(result, -1) {
 			return nil
 		}
@@ -158,12 +191,8 @@ func runRecentBlockTest(ctx context.Context, cfg *config.Config, cmd *testdata.J
 		fail(fmt.Errorf("invalid recent-block request"))
 		return
 	}
-	placeholder := map[string]string{
-		"debug_traceTransaction": "$transactionHash", "debug_traceBlockByNumber": "$blockNumber", "debug_traceBlockByHash": "$blockHash",
-		"debug_getRawBlock": "$blockNumber", "debug_getRawHeader": "$blockNumber", "debug_getRawReceipts": "$blockNumber",
-	}[method]
 	var selector string
-	if placeholder == "" || json.Unmarshal(params[0], &selector) != nil || selector != placeholder {
+	if json.Unmarshal(params[0], &selector) != nil || !slices.Contains(recentSelectors[method], selector) {
 		fail(fmt.Errorf("unsupported method or misplaced recent-block selector"))
 		return
 	}
@@ -257,7 +286,27 @@ func runRecentBlockTest(ctx context.Context, cfg *config.Config, cmd *testdata.J
 		return
 	}
 	evidence["block"] = block
-	resolved := map[string]string{"$blockNumber": block.Number, "$blockHash": block.Hash, "$transactionHash": block.Transactions[0]}[placeholder]
+	resolved := map[string]string{"$blockNumber": block.Number, "$blockHash": block.Hash, "$transactionHash": block.Transactions[0]}[selector]
+	if selector == "$rawBlock" {
+		// Both clients must serve identical RLP so the traced input cannot favour either side.
+		var raw [2]any
+		for side := range targets {
+			value, err := query(side, "debug_getRawBlock", block.Hash)
+			if err == nil && !hexBytes(value, -1) {
+				err = fmt.Errorf("invalid raw block")
+			}
+			if err != nil {
+				fail(fmt.Errorf("client %d cannot supply the raw block: %w", side, err))
+				return
+			}
+			raw[side] = value
+		}
+		if raw[0] != raw[1] {
+			fail(fmt.Errorf("clients return different raw blocks for %s", block.Hash))
+			return
+		}
+		resolved = raw[0].(string)
+	}
 	params[0], _ = json.Marshal(resolved)
 	request["params"], _ = json.Marshal(params)
 	raw, _ := json.Marshal(request)

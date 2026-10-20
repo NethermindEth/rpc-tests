@@ -289,6 +289,14 @@ the two API families are not interchangeable raw-response comparisons.
 
 The `keccak256PreimageTracer` cases (`debug_traceCall/test_80.json` through `test_97.json`) cover empty and repeated hashes, expanded but unwritten memory, zero-padded memory, the padding limit, malformed stacks, large offsets, out-of-gas execution, reverted child calls, and independence from opcode-logger options. They also use explicit account overrides and the latest-block pass.
 
+## Node configuration
+
+The mainnet `eth_signTransaction` fixtures check fee validation errors that are
+raised before any account lookup, so they need no unlocked account. Nethermind
+disables `eth_signTransaction` by default and answers
+`-32601 eth_signTransaction is disabled`, so start a Nethermind node under test
+with `JsonRpc.EnableEthSignTransaction=true`.
+
 ## Legacy Python Runner
 
 <details>

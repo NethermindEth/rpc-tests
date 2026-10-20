@@ -1,0 +1,28 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "empty sender without fee fields"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000003",
+          "to": "0x7e57514b00000000000000000000000000000001"
+        },
+        "latest"
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

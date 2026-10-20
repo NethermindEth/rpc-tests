@@ -1,0 +1,45 @@
+[
+  {
+    "test": {
+      "tags": [
+        "@full",
+        "@pruned"
+      ],
+      "reference": "",
+      "description": "EIP-7702 transaction with tip above the fee cap"
+    },
+    "request": {
+      "jsonrpc": "2.0",
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x7e575e4d00000000000000000000000000000001",
+          "to": "0x7e57514b00000000000000000000000000000001",
+          "maxFeePerGas": "0x1",
+          "maxPriorityFeePerGas": "0x2",
+          "authorizationList": [
+            {
+              "chainId": "0x1",
+              "address": "0x7e57de1e00000000000000000000000000000001",
+              "nonce": "0x0",
+              "yParity": "0x0",
+              "r": "0x1",
+              "s": "0x1"
+            }
+          ]
+        },
+        "latest",
+        {
+          "0x7e575e4d00000000000000000000000000000001": {
+            "balance": "0x56bc75e2d63100000"
+          }
+        }
+      ],
+      "id": 1
+    },
+    "response": {
+      "jsonrpc": "2.0",
+      "id": 1
+    }
+  }
+]

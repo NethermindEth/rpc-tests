@@ -31,7 +31,7 @@
       "jsonrpc": "2.0",
       "error": {
         "code": -32602,
-        "message": "hex number with leading zero digits"
+        "message": "invalid argument 3: hex number with leading zero digits"
       }
     }
   }

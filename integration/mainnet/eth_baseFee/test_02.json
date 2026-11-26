@@ -13,7 +13,7 @@
         "response": {
             "id":1,
             "jsonrpc":"2.0",
-            "error": {"code": -32602, "message": "Invalid params"}
+            "error": {"code": -32602, "message": "too many arguments, want at most 0"}
         }
     }
 ]
